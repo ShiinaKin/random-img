@@ -1,3 +1,4 @@
+HELP.md
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar
@@ -34,3 +35,8 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Kotlin ###
+.kotlin
+/src/main/resources/dev/application.yml
+/src/main/resources/config/application.yml

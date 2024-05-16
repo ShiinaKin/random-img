@@ -1,0 +1,35 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: random-img
+  r2dbc:
+    url: r2dbc:mysql://192.168.2.101:3306/random_img
+    username: root
+    password: 123456
+  data:
+    redis:
+      host: 192.168.2.101
+      port: 6379
+random-img:
+  basic-auth:
+    username: xxx
+    password: xxx
+  s3:
+    access-id: xxx
+    access-token: xxx
+    endpoint: xxx
+    region: auto
+    bucket-name: xxx
+    cdn-url: xxx
+  cloudreve:
+    url: xxx
+    username: xxx
+    password: xxx
+    image-account-uid: 0
+    image-policy-id: 0
+    s3-src: xxx
+    cloudreve-dist: xxx
+    recursive: true
+  persistence-urls:
+    - http://localhost:6657

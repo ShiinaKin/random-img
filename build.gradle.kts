@@ -1,51 +1,62 @@
-val ktorVersion: String by project
-val kotlinVersion: String by project
-val logbackVersion: String by project
-val ktormVersion: String by project
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.9.24"
-    id("io.ktor.plugin") version "2.3.10"
-    id("org.jetbrains.kotlin.plugin.serialization") version "1.9.24"
+    id("org.springframework.boot") version "3.2.5"
+    id("io.spring.dependency-management") version "1.1.4"
+    kotlin("jvm") version "1.9.23"
+    kotlin("plugin.spring") version "1.9.23"
 }
 
 group = "io.sakurasou"
 version = "0.1.0"
 
-application {
-    mainClass.set("io.sakurasou.ApplicationKt")
-
-    val isDevelopment: Boolean = project.ext.has("development")
-    applicationDefaultJvmArgs = listOf("-Dio.ktor.development=$isDevelopment")
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
 }
 
 repositories {
     mavenLocal()
     maven("https://maven.aliyun.com/repository/central")
     mavenCentral()
-
 }
 
 dependencies {
-    implementation("org.ktorm:ktorm-core:${ktormVersion}")
+    implementation("io.github.oshai:kotlin-logging-jvm:6.0.9")
 
-    implementation("io.ktor:ktor-server-core-jvm")
-    implementation("io.ktor:ktor-server-auth-jvm")
-    implementation("io.ktor:ktor-server-cors-jvm")
-    implementation("io.ktor:ktor-server-default-headers-jvm")
-    implementation("io.ktor:ktor-server-http-redirect-jvm")
-    implementation("com.ucasoft.ktor:ktor-simple-cache:0.+")
-    implementation("com.ucasoft.ktor:ktor-simple-redis-cache-jvm:0.+")
-    implementation("io.ktor:ktor-server-swagger-jvm")
-    implementation("io.ktor:ktor-server-content-negotiation-jvm")
-    implementation("io.ktor:ktor-serialization-jackson-jvm")
-    implementation("io.ktor:ktor-server-conditional-headers-jvm")
-    implementation("io.ktor:ktor-server-forwarded-header-jvm")
-    implementation("io.ktor:ktor-server-resources")
-    implementation("io.ktor:ktor-server-netty-jvm")
-    implementation("ch.qos.logback:logback-classic:$logbackVersion")
-    implementation("io.ktor:ktor-server-call-logging-jvm")
-    implementation("io.ktor:ktor-server-call-id-jvm")
-    testImplementation("io.ktor:ktor-server-tests-jvm")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlinVersion")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+
+    implementation("com.amazonaws:aws-java-sdk-s3:1.12.720") {
+        exclude("commons-logging", module = "commons-logging")
+    }
+    implementation("javax.xml.bind:jaxb-api:2.3.1")
+
+    implementation("com.squareup.okhttp3:okhttp")
+
+    implementation("org.springframework.boot:spring-boot-starter-data-redis-reactive")
+    implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
+    // compileOnly("com.github.jasync-sql:jasync-r2dbc-mysql:2.2.0")
+    compileOnly("io.asyncer:r2dbc-mysql")
+
+    implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.boot:spring-boot-configuration-processor")
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
+    runtimeOnly("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("io.projectreactor:reactor-test")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+tasks.withType<KotlinCompile> {
+    kotlinOptions {
+        freeCompilerArgs += "-Xjsr305=strict"
+        jvmTarget = "21"
+    }
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
 }
