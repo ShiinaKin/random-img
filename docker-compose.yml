@@ -1,0 +1,59 @@
+version: '1.0'
+services:
+  random-img:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - random-img-mysql
+      - random-img-redis
+    environment:
+      SPRING_DATASOURCE_URL: r2dbc:mysql://random-img-mysql:3306/random_img
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: passwd
+      SPRING_REDIS_HOST: random-img-redis
+      SPRING_REDIS_PORT: 6379
+      BASIC_AUTH_USERNAME: username
+      BASIC_AUTH_PASSWORD: "{noop}passwd"
+      S3_ACCESS_ID: xxx
+      S3_ACCESS_TOKEN: xxx
+      S3_ENDPOINT: http://localhost
+      S3_REGION: auto
+      S3_BUCKET_NAME: xxx
+      S3_CDN_URL: http://localhost
+      CLOUDREVE_URL: http://localhost
+      CLOUDREVE_USERNAME: xxx
+      CLOUDREVE_PASSWORD: xxx
+      CLOUDREVE_IMAGE_ACCOUNT_UID: 0
+      CLOUDREVE_IMAGE_POLICY_ID: 0
+      CLOUDREVE_S3_SRC: /
+      CLOUDREVE_DIST: /
+      CLOUDREVE_RECURSIVE: true
+      PERSISTENCE_HOSTS: localhost
+    volumes:
+      - random-img-data
+    networks:
+      - random-img-net
+
+  random-img-mysql:
+    image: mysql:8.0.37-debian
+    environment:
+      MYSQL_ROOT_PASSWORD: passwd
+      MYSQL_DATABASE: random_img
+    networks:
+      - random-img-net
+
+  random-img-redis:
+    image: redis:7.2.4-alpine
+    networks:
+      - random-img-net
+
+networks:
+  random-img-net:
+    name: random-img-net
+    driver: bridge
+
+volumes:
+  random-img-data:
