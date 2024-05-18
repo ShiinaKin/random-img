@@ -4,13 +4,13 @@ spring:
   application:
     name: random-img
   r2dbc:
-    url: r2dbc:mysql://localhost:3306/random_img
-    username: root
-    password: 123456
+    url: ${SPRING_R2DBC_URL}
+    username: ${SPRING_R2DBC_USERNAME}
+    password: ${SPRING_R2DBC_PASSWORD}
   data:
     redis:
-      host: 192.168.2.101
-      port: 6379
+      host: ${SPRING_DATA_REDIS_HOST}
+      port: ${SPRING_DATA_REDIS_PORT}
 random-img:
   basic-auth:
     username: ${BASIC_AUTH_USERNAME}
