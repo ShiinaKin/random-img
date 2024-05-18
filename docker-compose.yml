@@ -1,6 +1,7 @@
 version: '3.9'
 services:
   random-img:
+    container_name: random-img
     build:
       context: .
       dockerfile: Dockerfile
@@ -38,6 +39,7 @@ services:
       - random-img-net
 
   random-img-mysql:
+    container_name: random-img-mysql
     image: mysql:8.0.37-debian
     environment:
       MYSQL_ROOT_PASSWORD: passwd
@@ -46,6 +48,7 @@ services:
       - random-img-net
 
   random-img-redis:
+    container_name: random-img-redis
     image: redis:7.2.4-alpine
     networks:
       - random-img-net
