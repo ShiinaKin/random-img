@@ -1,5 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
+val version: String by project
+
 plugins {
     id("org.springframework.boot") version "3.2.5"
     id("io.spring.dependency-management") version "1.1.4"
@@ -8,7 +10,6 @@ plugins {
 }
 
 group = "io.sakurasou"
-version = "0.1.0"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_21
@@ -35,8 +36,11 @@ dependencies {
 
     implementation("org.springframework.boot:spring-boot-starter-data-redis-reactive")
     implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
-    // compileOnly("com.github.jasync-sql:jasync-r2dbc-mysql:2.2.0")
-    compileOnly("io.asyncer:r2dbc-mysql")
+    runtimeOnly("io.asyncer:r2dbc-mysql")
+    runtimeOnly("io.r2dbc:r2dbc-h2")
+    runtimeOnly("com.h2database:h2")
+    runtimeOnly("org.postgresql:postgresql")
+    runtimeOnly("org.postgresql:r2dbc-postgresql")
 
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-configuration-processor")

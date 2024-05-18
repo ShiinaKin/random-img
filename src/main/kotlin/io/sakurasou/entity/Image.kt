@@ -21,7 +21,8 @@ data class ImageDeleteDTO(
 
 data class ImageQuery(
     val id: Long,
-    val th: Int = 640
+    val quality: Int?,
+    val th: Int?
 )
 
 data class ImageQueryDTO(
@@ -32,7 +33,8 @@ data class ImageRandomDTO(
     val source: String,
     val postID: String?,
     val uid: Long?,
-    val th: Int = 640
+    val quality: Int?,
+    val th: Int?
 )
 
 data class ImageRandomQueryDTO(

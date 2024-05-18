@@ -22,7 +22,7 @@ import java.util.*
 @Component
 class ImageEndpoint(
     private val imageService: ImageService,
-    private val s3UploadService: S3UploadService
+    private val s3UploadService: S3UploadService,
 ) : BaseEndpoint {
 
     override fun route(): RouterFunction<ServerResponse> =
@@ -37,18 +37,21 @@ class ImageEndpoint(
     private fun upload(serverRequest: ServerRequest): Mono<ServerResponse> {
         return serverRequest.multipartData().flatMap { parts ->
             val filePart = parts["file"]?.first() as? FilePart
-            filePart?.content()?.reduce(ByteBuffer.allocate(0)) { buffer, dataBuffer ->
-                val newBuffer = ByteBuffer.allocate(buffer.remaining() + dataBuffer.readableByteCount())
-                newBuffer.put(buffer)
-                newBuffer.put(dataBuffer.asByteBuffer())
-                newBuffer.flip()
-                newBuffer
-            }?.flatMap { byteBuffer ->
-                val byteArray = ByteArray(byteBuffer.remaining())
-                byteBuffer.get(byteArray)
-                s3UploadService.handleUpload(byteArray)
-                    .flatMap { ServerResponse.ok().bodyValue(it) }
-            }
+            (filePart?.content()?.reduce(ByteBuffer.allocate(0)) { buffer, dataBuffer ->
+                ByteBuffer.allocate(buffer.remaining() + dataBuffer.readableByteCount()).apply {
+                    put(buffer)
+                    val dataByteBuffer = ByteBuffer.allocate(dataBuffer.readableByteCount())
+                    dataBuffer.toByteBuffer(dataByteBuffer)
+                    put(dataByteBuffer)
+                    flip()
+                }
+            } ?: throw WrongParameterException("file needed"))
+                .flatMap { byteBuffer ->
+                    val byteArray = ByteArray(byteBuffer.remaining())
+                    byteBuffer.get(byteArray)
+                    s3UploadService.handleUpload(byteArray)
+                        .flatMap { ServerResponse.ok().bodyValue(it) }
+                }
         }
     }
 
@@ -70,9 +73,9 @@ class ImageEndpoint(
     private fun getImg(serverRequest: ServerRequest): Mono<ServerResponse> {
         return serverRequest.let {
             val id = it.queryParamOrNull("id")?.toLong() ?: throw WrongParameterException("need imageId")
-            it.queryParamOrNull("th")?.let { th ->
-                Mono.just(ImageQuery(id, th.toInt()))
-            } ?: Mono.just((ImageQuery(id)))
+            val quality = it.queryParamOrNull("quality")?.toInt()
+            val th = it.queryParamOrNull("th")?.toInt()
+            Mono.just(ImageQuery(id, quality, th))
         }
             .flatMap { imageService.selectImage(it) }
             .flatMap { redirect2Img(it) }
@@ -83,20 +86,24 @@ class ImageEndpoint(
         return httpRequest.let {
             val postId = it.queryParamOrNull("postId")?.let { postId -> UUID.fromString(postId) }
             val uid = it.queryParamOrNull("uid")?.toLong()
-            it.queryParamOrNull("th")?.let { th ->
-                Mono.just(ImageRandomRequest(source, postId, uid, th.toInt()))
-            } ?: Mono.just((ImageRandomRequest(source, postId, uid)))
+            val quality = it.queryParamOrNull("quality")?.toInt()
+            val th = it.queryParamOrNull("th")?.toInt()
+            Mono.just(ImageRandomRequest(source, postId, uid, quality, th))
         }
-            .map { ImageRandomDTO(source, it.postId?.toString(), it.uid, it.th) }
+            .map { ImageRandomDTO(source, it.postId?.toString(), it.uid, it.quality, it.th) }
             .flatMap { imageService.randomGetImage(it) }
             .flatMap { redirect2Img(it) }
     }
 
+    /**
+     * 可以去掉，等重构，目前唯一的意义是UUID格式校验
+     */
     private data class ImageRandomRequest(
         val source: String?,
         val postId: UUID?,
-        val uid: Long? = null,
-        val th: Int = 640
+        val uid: Long?,
+        val quality: Int?,
+        val th: Int?
     )
 
     private fun redirect2Img(imgUrl: String): Mono<ServerResponse> =

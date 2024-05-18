@@ -58,6 +58,8 @@ class ImageService(
                             throw ImageFetchException("no such img, id: ${imageQuery.id}")
                         }
                 }
+            }.map {
+                handleUrl(it, "quality" to imageQuery.quality, "th" to imageQuery.th)
             }
     }
 
@@ -109,14 +111,21 @@ class ImageService(
                             }
                     }
                 }
+                .map {
+                    handleUrl(it, "quality" to imageRandomDTO.quality, "th" to imageRandomDTO.th)
+                }
         } else {
             imageDAO.randomSelImage(ImageRandomQueryDTO(imageRandomDTO.uid))
                 .switchIfEmpty { throw ImageFetchException("no random image fetched") }
                 .map {
                     logger.debug { "random img, not taken referer and postId" }
                     logger.info { "random img, source: $source fetch random image successfully, imgId: ${it.id}" }
-                    it.url
+                    handleUrl(it.url, "quality" to imageRandomDTO.quality, "th" to imageRandomDTO.th)
                 }
         }
+    }
+
+    private fun handleUrl(rawUrl: String, vararg params: Pair<String, Any?>): String {
+        return rawUrl + "?" + params.filter { it.second != null }.joinToString("&") { "${it.first}=${it.second}" }
     }
 }

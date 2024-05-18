@@ -4,7 +4,7 @@ spring:
   application:
     name: random-img
   r2dbc:
-    url: r2dbc:mysql://192.168.2.101:3306/random_img
+    url: r2dbc:mysql://localhost:3306/random_img
     username: root
     password: 123456
   data:
@@ -13,23 +13,23 @@ spring:
       port: 6379
 random-img:
   basic-auth:
-    username: xxx
-    password: xxx
+    username: username
+    password: "{noop}passwd"
   s3:
     access-id: xxx
     access-token: xxx
-    endpoint: xxx
+    endpoint: http://localhost
     region: auto
     bucket-name: xxx
-    cdn-url: xxx
+    cdn-url: http://localhost
   cloudreve:
-    url: xxx
+    url: http://localhost
     username: xxx
     password: xxx
     image-account-uid: 0
     image-policy-id: 0
-    s3-src: xxx
-    cloudreve-dist: xxx
+    s3-src: /
+    cloudreve-dist: /
     recursive: true
-  persistence-urls:
-    - http://localhost:6657
+  persistence-hosts:
+    - localhost
