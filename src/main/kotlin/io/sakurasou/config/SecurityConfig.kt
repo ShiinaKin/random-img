@@ -34,6 +34,7 @@ class SecurityConfig(
         .authorizeExchange {
             it.pathMatchers("/random").permitAll()
                 .pathMatchers("/").authenticated()
+                .pathMatchers("/remote-upload").authenticated()
                 .anyExchange().denyAll()
         }
         .httpBasic { }

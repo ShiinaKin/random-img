@@ -27,10 +27,9 @@ class ImageService(
     private val logger = KotlinLogging.logger { this::class.java }
 
     fun batchInsertImage(dtoList: List<ImageDTO>): Mono<String> {
-        return imageDAO.batchInsert(dtoList)
-            .map {
-                "total img: ${dtoList.size}, success upload: $it"
-            }
+        return if (dtoList.isEmpty()) Mono.just("total img: 0, success upload: 0")
+        else imageDAO.batchInsert(dtoList)
+                .map { "total img: ${dtoList.size}, success upload: $it" }
     }
 
     fun deleteImage(deleteDTO: ImageDeleteDTO): Mono<String> {

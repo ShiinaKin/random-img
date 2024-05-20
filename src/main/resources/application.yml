@@ -21,6 +21,7 @@ random-img:
     endpoint: ${S3_ENDPOINT}
     region: ${S3_REGION}
     bucket-name: ${S3_BUCKET_NAME}
+    manual-upload-bucket-name: ${S3_MANUAL_UPLOAD_BUCKET_NAME}
     cdn-url: ${S3_CDN_URL}
   cloudreve:
     url: ${CLOUDREVE_URL}

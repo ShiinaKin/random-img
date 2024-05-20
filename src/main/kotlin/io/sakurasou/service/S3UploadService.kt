@@ -3,16 +3,19 @@ package io.sakurasou.service
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.model.ObjectMetadata
 import com.amazonaws.services.s3.model.PutObjectRequest
+import com.amazonaws.services.s3.model.S3ObjectSummary
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.sakurasou.config.RandomImgConfig
 import io.sakurasou.entity.ImageDTO
 import io.sakurasou.exception.WrongParameterException
 import org.springframework.stereotype.Service
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import java.io.ByteArrayInputStream
 import java.time.Instant
 import java.util.*
-import java.util.zip.*
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
 
 /**
  * @author mashirot
@@ -28,11 +31,68 @@ class S3UploadService(
     private val logger = KotlinLogging.logger { this::class.java }
 
     val bucketName = config.s3.bucketName
+    val uploadBucketName = config.s3.manualUploadBucketName
     val cdnUrl = config.s3.cdnUrl
+
+    fun handleRemoteUpload(): Mono<String> {
+        return Flux.fromIterable(s3Client.listObjectsV2(uploadBucketName).objectSummaries)
+            .flatMap { objSummary ->
+                handleS3ObjectSummary(objSummary)
+                    .flatMap { (success, imgCnt) ->
+                        if (success) {
+                            s3Client.deleteObject(bucketName, objSummary.key)
+                            Mono.just(true to imgCnt)
+                        } else {
+                            Mono.empty()
+                        }
+                    }
+            }
+            .collectList()
+            .map { pairs ->
+                val objKeys = pairs.map { it.first }
+                val totalImageCnt = pairs.sumOf { it.second }
+                "success upload: ${objKeys}, success upload img: $totalImageCnt"
+            }
+    }
+
+    private fun handleS3ObjectSummary(s3ObjectSummary: S3ObjectSummary): Mono<Pair<Boolean, Int>> {
+        val key = s3ObjectSummary.key
+        val s3Object = s3Client.getObject(uploadBucketName, key)
+        val uploadFiles = handleDownloadedZipFile(key.split(".")[0].toLong(), s3Object.objectContent.readBytes())
+        val imageDTOs = mutableListOf<ImageDTO>()
+        uploadFile2S3(uploadFiles, imageDTOs)
+        return imageService.batchInsertImage(imageDTOs)
+            .thenReturn(true to uploadFiles.size)
+    }
+
+    private fun handleDownloadedZipFile(key: Long, byteArray: ByteArray): List<UploadFile> {
+        val uploadFiles = mutableListOf<UploadFile>()
+        ZipInputStream(ByteArrayInputStream(byteArray)).use { zis ->
+            var entry = zis.nextEntry
+            while (entry != null) {
+                if (entry.isDirectory) {
+                    throw WrongParameterException("Invalid zip file directory format")
+                }
+                val content = zis.readBytes()
+                val lastModifiedTime = entry.lastModifiedTime
+                uploadFiles.add(
+                    UploadFile(
+                        uid = key,
+                        pid = entry.name,
+                        content = content,
+                        size = content.size.toLong(),
+                        lastModifiedTime = lastModifiedTime.toInstant()
+                    )
+                )
+                entry = zis.nextEntry
+            }
+        }
+        return uploadFiles
+    }
 
     fun handleUpload(inputFileBytes: ByteArray): Mono<String> {
         val uploadFiles = mutableListOf<UploadFile>()
-        handleUnCompressFile(uploadFiles, inputFileBytes)
+        handleNormalZipFile(uploadFiles, inputFileBytes)
         val imageDTOs = mutableListOf<ImageDTO>()
         uploadFile2S3(uploadFiles, imageDTOs)
         return imageService.batchInsertImage(imageDTOs)
@@ -64,7 +124,7 @@ class S3UploadService(
         }
     }
 
-    private fun handleUnCompressFile(uploadFiles: MutableList<UploadFile>, fileBytes: ByteArray) {
+    private fun handleNormalZipFile(uploadFiles: MutableList<UploadFile>, fileBytes: ByteArray) {
         ZipInputStream(ByteArrayInputStream(fileBytes)).use { zipInputStream ->
             var entry: ZipEntry? = zipInputStream.nextEntry
             var uid = 0L

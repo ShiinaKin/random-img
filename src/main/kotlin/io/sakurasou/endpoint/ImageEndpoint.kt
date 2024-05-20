@@ -28,6 +28,7 @@ class ImageEndpoint(
     override fun route(): RouterFunction<ServerResponse> =
         RouterFunctions.route()
             .POST("/", this::upload)
+            .PUT("/remote-upload", this::remoteUpload)
             .DELETE("/", this::delImg)
             .GET("/", this::getImg)
             .GET("/random", this::random)
@@ -53,6 +54,12 @@ class ImageEndpoint(
                         .flatMap { ServerResponse.ok().bodyValue(it) }
                 }
         }
+    }
+
+    @PreAuthorize("authenticated")
+    private fun remoteUpload(serverRequest: ServerRequest): Mono<ServerResponse> {
+        return s3UploadService.handleRemoteUpload()
+            .flatMap { ServerResponse.ok().bodyValue(it) }
     }
 
     @PreAuthorize("authenticated")

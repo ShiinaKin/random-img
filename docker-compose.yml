@@ -24,6 +24,7 @@ services:
       S3_ENDPOINT: http://localhost
       S3_REGION: auto
       S3_BUCKET_NAME: xxx
+      S3_MANUAL_UPLOAD_BUCKET_NAME: xxx
       S3_CDN_URL: http://localhost
       CLOUDREVE_URL: http://localhost
       CLOUDREVE_USERNAME: xxx

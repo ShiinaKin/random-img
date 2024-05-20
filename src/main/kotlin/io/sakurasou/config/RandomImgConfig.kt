@@ -24,6 +24,7 @@ class RandomImgConfig {
         val endpoint: String,
         val region: String,
         val bucketName: String,
+        val manualUploadBucketName: String,
         val cdnUrl: String
     )
 
