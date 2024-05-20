@@ -40,7 +40,7 @@ class S3UploadService(
                 handleS3ObjectSummary(objSummary)
                     .flatMap { (success, imgCnt) ->
                         if (success) {
-                            s3Client.deleteObject(bucketName, objSummary.key)
+                            s3Client.deleteObject(uploadBucketName, objSummary.key)
                             Mono.just(true to imgCnt)
                         } else {
                             Mono.empty()
