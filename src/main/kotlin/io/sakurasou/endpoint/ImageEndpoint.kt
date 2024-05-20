@@ -58,7 +58,8 @@ class ImageEndpoint(
 
     @PreAuthorize("authenticated")
     private fun remoteUpload(serverRequest: ServerRequest): Mono<ServerResponse> {
-        return s3UploadService.handleRemoteUpload()
+        val uploadNum = serverRequest.queryParamOrNull("uploadNum")?.toInt() ?: 1
+        return s3UploadService.handleRemoteUpload(uploadNum)
             .flatMap { ServerResponse.ok().bodyValue(it) }
     }
 

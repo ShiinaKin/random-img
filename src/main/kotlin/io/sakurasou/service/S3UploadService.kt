@@ -34,8 +34,11 @@ class S3UploadService(
     val uploadBucketName = config.s3.manualUploadBucketName
     val cdnUrl = config.s3.cdnUrl
 
-    fun handleRemoteUpload(): Mono<String> {
-        return Flux.fromIterable(s3Client.listObjectsV2(uploadBucketName).objectSummaries)
+    fun handleRemoteUpload(uploadNum: Int): Mono<String> {
+        var objectSummaries = s3Client.listObjectsV2(uploadBucketName).objectSummaries
+        objectSummaries = if (objectSummaries.size <= uploadNum) objectSummaries
+        else objectSummaries.subList(0, uploadNum - 1)
+        return Flux.fromIterable(objectSummaries)
             .flatMap { objSummary ->
                 handleS3ObjectSummary(objSummary)
                     .flatMap { (success, imgCnt) ->
@@ -51,6 +54,7 @@ class S3UploadService(
             .map { pairs ->
                 val objKeys = pairs.map { it.first }
                 val totalImageCnt = pairs.sumOf { it.second }
+                logger.info { "success upload: ${objKeys}, success upload img: $totalImageCnt" }
                 "success upload: ${objKeys}, success upload img: $totalImageCnt"
             }
     }
@@ -62,6 +66,9 @@ class S3UploadService(
         val imageDTOs = mutableListOf<ImageDTO>()
         uploadFile2S3(uploadFiles, imageDTOs)
         return imageService.batchInsertImage(imageDTOs)
+            .doOnNext {
+                logger.info { "$key upload success, imgCnt: ${uploadFiles.size}" }
+            }
             .thenReturn(true to uploadFiles.size)
     }
 
@@ -97,6 +104,7 @@ class S3UploadService(
         uploadFile2S3(uploadFiles, imageDTOs)
         return imageService.batchInsertImage(imageDTOs)
             .doOnNext {
+                logger.info { "upload success, imgCnt: ${uploadFiles.size}" }
                 cloudreveService.sync2Cloudreve()
             }
     }
