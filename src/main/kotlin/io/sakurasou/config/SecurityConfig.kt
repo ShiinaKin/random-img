@@ -32,8 +32,8 @@ class SecurityConfig(
     fun springSecurityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain = http
         .csrf { it.disable() }
         .authorizeExchange {
-            it.pathMatchers("images/random").permitAll()
-                .pathMatchers("images").authenticated()
+            it.pathMatchers("/random").permitAll()
+                .pathMatchers("/").authenticated()
                 .anyExchange().denyAll()
         }
         .httpBasic { }

@@ -27,10 +27,10 @@ class ImageEndpoint(
 
     override fun route(): RouterFunction<ServerResponse> =
         RouterFunctions.route()
-            .POST("/images", this::upload)
-            .DELETE("/images", this::delImg)
-            .GET("/images", this::getImg)
-            .GET("/images/random", this::random)
+            .POST("/", this::upload)
+            .DELETE("/", this::delImg)
+            .GET("/", this::getImg)
+            .GET("/random", this::random)
             .build()
 
     @PreAuthorize("authenticated")
