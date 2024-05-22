@@ -6,125 +6,105 @@ import io.sakurasou.dao.ImageDAO
 import io.sakurasou.dao.PostImageDAO
 import io.sakurasou.entity.*
 import io.sakurasou.exception.ImageFetchException
-import org.springframework.data.redis.core.ReactiveStringRedisTemplate
+import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Service
-import reactor.core.publisher.Mono
-import reactor.kotlin.core.publisher.switchIfEmpty
 import java.time.Duration
+import kotlin.math.absoluteValue
 
 /**
  * @author mashirot
- * 2024/5/13 16:59
+ * 2024/5/21 20:02
  */
 @Service
 class ImageService(
-    private val redisTemplate: ReactiveStringRedisTemplate,
     private val imageDAO: ImageDAO,
     private val postImageDAO: PostImageDAO,
-    private val s3DeleteService: S3DeleteService,
+    private val s3Service: S3Service,
+    private val redisTemplate: StringRedisTemplate,
     private val config: RandomImgConfig
 ) {
+
     private val logger = KotlinLogging.logger { this::class.java }
 
-    fun batchInsertImage(dtoList: List<ImageDTO>): Mono<String> {
-        return if (dtoList.isEmpty()) Mono.just("total img: 0, success upload: 0")
-        else imageDAO.batchInsert(dtoList)
-                .map { "total img: ${dtoList.size}, success upload: $it" }
+    suspend fun batchInsertImage(list: List<ImageDTO>) {
+        imageDAO.batchInsert(list)
     }
 
-    fun deleteImage(deleteDTO: ImageDeleteDTO): Mono<String> {
-        return imageDAO.deleteImageByIdOrUid(deleteDTO)
-            .collectList()
-            .flatMap { s3DeleteService.deleteFileFromS3(it) }
+    suspend fun deleteImage(deleteDTO: ImageDeleteDTO) {
+        val needDeletedImages = imageDAO.selectImageByIdOrUid(deleteDTO)
+        imageDAO.deleteImageByIds(needDeletedImages)
+        s3Service.deleteFileFromS3(needDeletedImages)
     }
 
-    fun selectImage(imageQuery: ImageQuery): Mono<String> {
-        val key = "random_img:select:${imageQuery.id}"
-        logger.debug { "select img, key: $key" }
+    suspend fun selectImage(query: ImageQuery): String {
         val defaultExpire = Duration.ofHours(3)
-        return redisTemplate.opsForValue().getAndExpire(key, defaultExpire)
-            .switchIfEmpty {
-                Mono.defer {
-                    logger.debug { "select img, cache miss" }
-                    imageDAO.selImage(ImageQueryDTO(imageQuery.id))
-                        .flatMap {
-                            logger.debug { "select img, cache miss" }
-                            redisTemplate.opsForValue().set(key, it.url, defaultExpire)
-                                .thenReturn(it.url)
-                        }
-                        .switchIfEmpty {
-                            logger.debug { "select img, database miss, id: ${imageQuery.id}" }
-                            throw ImageFetchException("no such img, id: ${imageQuery.id}")
-                        }
-                }
-            }.map {
-                handleUrl(it, "quality" to imageQuery.quality, "th" to imageQuery.th)
-            }
-    }
-
-    fun randomGetImage(imageRandomDTO: ImageRandomDTO): Mono<String> {
-        val defaultExpire = Duration.ofHours(3)
-        val source = imageRandomDTO.source
-        val postID = imageRandomDTO.postID
-        return if (postID != null) {
-            val key = "random_img:random:$source:$postID"
-            logger.debug { "random img, taken referer and post id, redis key: $key" }
-            redisTemplate.opsForValue().getAndExpire(key, defaultExpire)
-                .map {
-                    logger.debug { "random img, cache hit, key: $key" }
-                    it
-                }
-                .switchIfEmpty {
-                    Mono.defer {
-                        postImageDAO.selImgByPostId(PostImagePostIdDTO(source, postID))
-                            .map {
-                                logger.debug { "random img, cache miss, key: $key" }
-                                it.url
-                            }
-                            .switchIfEmpty {
-                                Mono.defer {
-                                    imageDAO.randomSelImage(ImageRandomQueryDTO(imageRandomDTO.uid))
-                                        .switchIfEmpty { throw ImageFetchException("no random image fetched") }
-                                        .flatMap { img ->
-                                            logger.debug { "random img, database miss, key: $key" }
-                                            logger.info { "random img, source: $source postId: $postID fetch random image successfully, imgId: ${img.id}" }
-                                            if (config.persistenceHosts.contains(source)) {
-                                                logger.debug { "random img, referer need to persistence" }
-                                                postImageDAO.insert(
-                                                    PostImageDTO(source, postID, img.id!!, img.url)
-                                                ).doOnNext {
-                                                    logger.debug { "random img, persistence success" }
-                                                }.switchIfEmpty {
-                                                    logger.debug { "random img, persistence failed" }
-                                                    Mono.empty()
-                                                }.thenReturn(img.url)
-                                            } else {
-                                                Mono.just(img.url)
-                                            }
-                                        }
-                                }
-                            }
-                            .flatMap {
-                                redisTemplate.opsForValue().set(key, it, defaultExpire)
-                                    .thenReturn(it)
-                            }
-                    }
-                }
-                .map {
-                    handleUrl(it, "quality" to imageRandomDTO.quality, "th" to imageRandomDTO.th)
-                }
-        } else {
-            imageDAO.randomSelImage(ImageRandomQueryDTO(imageRandomDTO.uid))
-                .switchIfEmpty { throw ImageFetchException("no random image fetched") }
-                .map {
-                    logger.debug { "random img, not taken referer and postId" }
-                    logger.info { "random img, source: $source fetch random image successfully, imgId: ${it.id}" }
-                    handleUrl(it.url, "quality" to imageRandomDTO.quality, "th" to imageRandomDTO.th)
-                }
+        val key = "random_img:select:${query.id}:${query.queryCondition}"
+        return redisTemplate.opsForValue().get(key) ?: run {
+            logger.debug { "select img id: ${query.id}, cache miss" }
+            val imageDTO = imageDAO.selectImage(ImageQueryDTO(query.id)) ?: throw ImageFetchException("no such image")
+            val url = chooseSimilarSize(imageDTO, query.queryConditionMap, query.queryCondition)
+            redisTemplate.opsForValue().set(key, url, defaultExpire)
+            url
         }
     }
 
-    private fun handleUrl(rawUrl: String, vararg params: Pair<String, Any?>): String {
-        return rawUrl + "?" + params.filter { it.second != null }.joinToString("&") { "${it.first}=${it.second}" }
+    suspend fun randomSelectImage(query: ImageRandomQuery): String {
+        val defaultExpire = Duration.ofHours(3)
+        val randomQueryDTO = ImageRandomQueryDTO(query.uid)
+        if (query.postID.isNullOrBlank()) {
+            logger.debug { "random img, not taken referer and postId" }
+            val imageDTO = imageDAO.randomSelImage(randomQueryDTO) ?: throw ImageFetchException("no such image")
+            logger.info { "random img, origin: ${query.origin} fetch random image successfully, imgId: ${imageDTO.id}" }
+            return chooseSimilarSize(imageDTO, query.queryConditionMap, query.queryCondition)
+        }
+        val key = "random_img:random:${query.origin}:${query.postID}:${query.queryCondition}"
+        logger.debug { "random img, taken referer and post id, redis key: $key" }
+        return redisTemplate.opsForValue().get(key) ?: run {
+            logger.debug { "random img, cache miss, key: $key" }
+            postImageDAO.selectImageByPostId(
+                PostImageQueryByPostIdDTO(
+                    query.origin,
+                    query.postID,
+                    query.queryCondition
+                )
+            )?.url ?: run {
+                logger.debug { "random img, database miss, key: $key" }
+                val imageDTO = imageDAO.randomSelImage(randomQueryDTO) ?: throw ImageFetchException("no such image")
+                logger.info { "random img, origin: ${query.origin} postId: ${query.postID} " +
+                        "fetch random image successfully, imgId: ${imageDTO.id}" }
+                val url = chooseSimilarSize(imageDTO, query.queryConditionMap, query.queryCondition)
+                if (config.persistenceReferer.contains(query.origin)) {
+                    postImageDAO.insert(
+                        PostImageDTO(
+                            query.origin,
+                            query.postID,
+                            imageDTO.id!!,
+                            query.queryCondition,
+                            url
+                        )
+                    )
+                    logger.debug { "random img, persistence success" }
+                }
+                redisTemplate.opsForValue().set(key, url, defaultExpire)
+                url
+            }
+        }
     }
+
+    private fun chooseSimilarSize(imageDTO: ImageDTO, queryConditionMap: Map<String, Any?>, queryCondition: String): String {
+        var url = imageDTO.authority + "/"
+        val th = queryConditionMap["th"]?.toString()?.toInt()
+        url += if (th != null) {
+            val i1 = (th - imageDTO.originalWidth).absoluteValue
+            val i2 = (th - ImageSize.MEDIUM_SIZE.size).absoluteValue
+            val i3 = (th - ImageSize.MINIMAL_SIZE.size).absoluteValue
+            when {
+                i1 <= i2 && i1 <= i3 -> imageDTO.originalSizePath
+                i2 <= i1 && i2 <= i3 -> imageDTO.mediumSizePath
+                else -> imageDTO.minimalSizePath
+            }
+        } else imageDTO.mediumSizePath
+        return "$url?$queryCondition"
+    }
+
 }

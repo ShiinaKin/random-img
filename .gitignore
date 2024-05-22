@@ -38,5 +38,4 @@ out/
 
 ### Kotlin ###
 .kotlin
-/src/main/resources/dev/application.yml
-/src/main/resources/config/application.yml
+/src/main/resources/config/

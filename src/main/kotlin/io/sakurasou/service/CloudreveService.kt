@@ -6,6 +6,8 @@ import io.sakurasou.config.OkHttpConfig.Companion.CLOUDREVE_SESSION
 import io.sakurasou.config.OkHttpConfig.Companion.cloudreveHttpUrl
 import io.sakurasou.config.OkHttpConfig.Companion.cookieMap
 import io.sakurasou.config.RandomImgConfig
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -14,13 +16,13 @@ import org.springframework.stereotype.Service
 
 /**
  * @author mashirot
- * 2024/5/15 16:59
+ * 2024/5/22 22:34
  */
 @Service
 class CloudreveService(
     objectMapper: ObjectMapper,
-    private val httpClient: OkHttpClient,
     config: RandomImgConfig,
+    private val httpClient: OkHttpClient,
 ) {
     private val logger = KotlinLogging.logger { this::class.java }
 
@@ -50,22 +52,24 @@ class CloudreveService(
         .post(cloudreveSyncRequestBody)
         .build()
 
-    fun sync2Cloudreve() {
-        if (!httpClient.hasCloudreveSession()) {
-            httpClient.newCall(loginRequest).execute().use {
-                if (!it.isSuccessful) {
-                    logger.warn { "cloudreve login failed, ${it.code} ${it.message}" }
-                    return
+    suspend fun sync2Cloudreve() {
+        withContext(Dispatchers.IO) {
+            if (!httpClient.hasCloudreveSession()) {
+                httpClient.newCall(loginRequest).execute().use {
+                    if (!it.isSuccessful) {
+                        logger.warn { "cloudreve login failed, ${it.code} ${it.message}" }
+                        return@withContext
+                    }
+                    logger.debug { "cloudreve login success" }
                 }
-                logger.debug { "cloudreve login success" }
             }
-        }
-        httpClient.newCall(syncRequest).execute().use {
-            if (!it.isSuccessful) {
-                logger.warn { "cloudreve sync failed, ${it.code} ${it.message}" }
-                return
+            httpClient.newCall(syncRequest).execute().use {
+                if (!it.isSuccessful) {
+                    logger.warn { "cloudreve sync failed, ${it.code} ${it.message}" }
+                    return@withContext
+                }
+                logger.debug { "cloudreve sync success" }
             }
-            logger.debug { "cloudreve sync success" }
         }
     }
 

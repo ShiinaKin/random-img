@@ -1,59 +1,103 @@
 package io.sakurasou.dao
 
 import io.sakurasou.config.SnowFlakeIdGenerator
-import io.sakurasou.entity.PostImage
 import io.sakurasou.entity.PostImageDTO
-import io.sakurasou.entity.PostImagePostIdDTO
-import io.sakurasou.entity.PostImageSourceDTO
-import io.sakurasou.repository.PostImageRepository
-import org.springframework.stereotype.Component
-import reactor.core.publisher.Flux
-import reactor.core.publisher.Mono
+import io.sakurasou.entity.PostImageDeleteByOriginDTO
+import io.sakurasou.entity.PostImageQueryByPostIdDTO
+import io.sakurasou.entity.PostImages
+import io.sakurasou.entity.PostImages.deleted
+import io.sakurasou.entity.PostImages.imageId
+import io.sakurasou.entity.PostImages.origin
+import io.sakurasou.entity.PostImages.postId
+import io.sakurasou.entity.PostImages.queryCondition
+import io.sakurasou.entity.PostImages.url
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.ktorm.database.Database
+import org.ktorm.dsl.*
+import org.springframework.stereotype.Repository
 import java.time.LocalDateTime
 
 /**
  * @author mashirot
- * 2024/5/15 18:02
+ * 2024/5/21 21:11
  */
-@Component
+@Repository
 class PostImageDAO(
-    private val idGenerator: SnowFlakeIdGenerator,
-    private val postImageRepository: PostImageRepository
+    private val database: Database,
+    private val idGenerator: SnowFlakeIdGenerator
 ) {
 
-     fun insert(postImageDTO: PostImageDTO): Mono<PostImage> {
-        return postImageRepository.insert(
-            PostImage().apply {
+    suspend fun insert(postImageDTO: PostImageDTO) {
+        withContext(Dispatchers.IO) {
+            database.insert(PostImages) {
                 val now = LocalDateTime.now()
-                id = idGenerator.generate()
-                source = postImageDTO.source
-                postId = postImageDTO.postId
-                imageId = postImageDTO.imageId
-                url = postImageDTO.url
-                createTime = now
-                updateTime = now
-                deleted = 0
+                set(it.id, idGenerator.generate())
+                set(it.origin, postImageDTO.origin)
+                set(it.postId, postImageDTO.postId)
+                set(it.imageId, postImageDTO.imageId)
+                set(it.queryCondition, postImageDTO.queryCondition)
+                set(it.url, postImageDTO.url)
+                set(it.createTime, now)
+                set(it.updateTime, now)
+                set(it.deleted, false)
             }
-        )
+        }
     }
 
-    fun deleteBySource(sourceDTO: PostImageSourceDTO): Flux<PostImage> {
-        return postImageRepository.deleteBySource(sourceDTO.source)
-    }
-
-    fun deleteByPostId(postIdDTO: PostImagePostIdDTO): Mono<PostImage> {
-        return postImageRepository.deleteByPostId(postIdDTO.source, postIdDTO.postId)
-    }
-
-    fun selImgByPostId(postIdDTO: PostImagePostIdDTO): Mono<PostImageDTO> {
-        return postImageRepository.selImgByPostId(postIdDTO.source, postIdDTO.postId)
-            .map {
-                PostImageDTO(
-                    it.source!!,
-                    it.postId!!,
-                    it.imageId!!,
-                    it.url!!
-                )
+    suspend fun deleteByOrigin(postImageDeleteByOriginDTO: PostImageDeleteByOriginDTO) {
+        withContext(Dispatchers.IO) {
+            database.update(PostImages) {
+                set(it.deleted, true)
+                set(it.updateTime, LocalDateTime.now())
+                where { it.origin eq postImageDeleteByOriginDTO.origin }
+                where { it.deleted eq false }
             }
+        }
+    }
+
+    suspend fun deleteByImageId(imageId: Long) {
+        withContext(Dispatchers.IO) {
+            database.update(PostImages) {
+                set(it.deleted, true)
+                set(it.updateTime, LocalDateTime.now())
+                where { it.imageId eq imageId }
+                where { it.deleted eq false }
+            }
+        }
+    }
+
+    suspend fun deleteByImageIds(ids: List<Long>) {
+        withContext(Dispatchers.IO) {
+            database.batchUpdate(PostImages) {
+                ids.map { id ->
+                    item {
+                        set(it.deleted, true)
+                        set(it.updateTime, LocalDateTime.now())
+                        where { it.imageId eq id }
+                        where { it.deleted eq false }
+                    }
+                }
+            }
+        }
+    }
+
+    suspend fun selectImageByPostId(postImageQueryByPostIdDTO: PostImageQueryByPostIdDTO): PostImageDTO? {
+        return withContext(Dispatchers.IO) {
+            database.from(PostImages).select(origin, postId, imageId, queryCondition, url)
+                .where(origin eq postImageQueryByPostIdDTO.origin)
+                .where(postId eq postImageQueryByPostIdDTO.postId)
+                .where(deleted eq false)
+                .asIterable().firstOrNull()
+                ?.let {
+                    PostImageDTO(
+                        it[origin]!!,
+                        it[postId]!!,
+                        it[imageId]!!,
+                        it[queryCondition]!!,
+                        it[url]!!
+                    )
+                }
+        }
     }
 }
