@@ -13,7 +13,7 @@ create table if not exists images
     update_time        datetime             not null,
     is_deleted         tinyint(1) default 0 not null,
     constraint uk_path
-        unique (original_size_path)
+        unique (original_size_path, is_deleted)
 );
 # ---
 create table if not exists post_images
