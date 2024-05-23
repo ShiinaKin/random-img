@@ -76,9 +76,9 @@ class ImageDAO(
     suspend fun selectImageByIdOrUid(deleteDTO: ImageDeleteDTO): List<ImageDTO> {
         return withContext(Dispatchers.IO) {
             database.from(Images).select(uid, pid, authority, originalWidth, originalSizePath, mediumSizePath, minimalSizePath, id)
-                .where { deleted eq false }
-                .where {
-                    when {
+                .whereWithConditions {
+                    it += deleted eq false
+                    it += when {
                         deleteDTO.id != null -> id eq deleteDTO.id
                         deleteDTO.uid != null -> uid eq deleteDTO.uid
                         else -> throw WrongThreadException("must have id or uid")

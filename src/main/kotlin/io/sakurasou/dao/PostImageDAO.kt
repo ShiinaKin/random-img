@@ -50,8 +50,10 @@ class PostImageDAO(
             database.update(PostImages) {
                 set(it.deleted, true)
                 set(it.updateTime, LocalDateTime.now())
-                where { it.origin eq postImageDeleteByOriginDTO.origin }
-                where { it.deleted eq false }
+                where {
+                    (it.origin eq postImageDeleteByOriginDTO.origin) and
+                    (it.deleted eq false)
+                }
             }
         }
     }
@@ -61,8 +63,10 @@ class PostImageDAO(
             database.update(PostImages) {
                 set(it.deleted, true)
                 set(it.updateTime, LocalDateTime.now())
-                where { it.imageId eq imageId }
-                where { it.deleted eq false }
+                where {
+                    (it.imageId eq imageId) and
+                    (it.deleted eq false)
+                }
             }
         }
     }
@@ -74,8 +78,10 @@ class PostImageDAO(
                     item {
                         set(it.deleted, true)
                         set(it.updateTime, LocalDateTime.now())
-                        where { it.imageId eq id }
-                        where { it.deleted eq false }
+                        where {
+                            (it.imageId eq id) and
+                            (it.deleted eq false)
+                        }
                     }
                 }
             }
@@ -85,9 +91,11 @@ class PostImageDAO(
     suspend fun selectImageByPostId(postImageQueryByPostIdDTO: PostImageQueryByPostIdDTO): PostImageDTO? {
         return withContext(Dispatchers.IO) {
             database.from(PostImages).select(origin, postId, imageId, queryCondition, url)
-                .where(origin eq postImageQueryByPostIdDTO.origin)
-                .where(postId eq postImageQueryByPostIdDTO.postId)
-                .where(deleted eq false)
+                .where {
+                    (origin eq postImageQueryByPostIdDTO.origin) and
+                    (postId eq postImageQueryByPostIdDTO.postId) and
+                    (deleted eq false)
+                }
                 .asIterable().firstOrNull()
                 ?.let {
                     PostImageDTO(
