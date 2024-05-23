@@ -8,11 +8,13 @@ import io.sakurasou.entity.ImageSize
 import io.sakurasou.exception.WrongParameterException
 import io.sakurasou.util.ImageUtils
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.springframework.stereotype.Service
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
 import java.time.Instant
+import java.util.concurrent.*
 import java.util.zip.*
 import javax.imageio.ImageIO
 
@@ -30,31 +32,49 @@ class UploadService(
 
     private val logger = KotlinLogging.logger { this::class.java }
 
-    val cdnUrl = config.s3.cdnUrl
+    private val uploadThreadPool = ThreadPoolExecutor(
+        2, 4, 2, TimeUnit.MINUTES, LinkedBlockingQueue(),
+        { Thread(it, "async-image-upload-thread") }, ThreadPoolExecutor.AbortPolicy()
+    )
+    private val s3ObjSummaryNeed2UploadSet = mutableSetOf<S3ObjectSummary>()
+
+    private val cdnUrl = config.s3.cdnUrl
 
     suspend fun handleRemoteUpload(uploadNum: Int) {
-        var objectSummaries = s3Service.listUploadBucket()
-        objectSummaries = if (objectSummaries.size <= uploadNum) objectSummaries
-        else objectSummaries.subList(0, uploadNum - 1)
-        val pairs = objectSummaries.map { objSummary ->
-            handleS3ObjectSummary(objSummary).let {
-                if (it.first) { s3Service.delObjFromUploadBucket(objSummary.key) }
-                it
+        uploadThreadPool.submit {
+            runBlocking {
+                var objectSummaries = s3Service.listUploadBucket().filter { !s3ObjSummaryNeed2UploadSet.contains(it) }
+                objectSummaries = if (objectSummaries.size <= uploadNum) objectSummaries
+                else objectSummaries.subList(0, uploadNum)
+                objectSummaries.forEach { s3ObjSummaryNeed2UploadSet.add(it) }
+                logger.info { "submit task to thread pool, ${objectSummaries.size} files need to upload" }
+                val pairs = objectSummaries.map { objSummary ->
+                    handleS3ObjectSummary(objSummary).let {
+                        if (it.first) {
+                            s3ObjSummaryNeed2UploadSet.remove(objSummary)
+                            s3Service.delObjFromUploadBucket(objSummary.key)
+                        }
+                        it.second
+                    }
+                }
+                val totalImageCnt = pairs.sumOf { it }
+                logger.info { "total success upload img: $totalImageCnt" }
+                cloudreveService.sync2Cloudreve()
             }
         }
-        val objKeys = pairs.map { it.first }
-        val totalImageCnt = pairs.sumOf { it.second }
-        logger.info { "success upload: ${objKeys}, success upload img: $totalImageCnt" }
-        cloudreveService.sync2Cloudreve()
     }
 
     suspend fun handleUpload(inputFileBytes: ByteArray) {
-        val uploadFiles = handleNormalZipFile(inputFileBytes)
-        val imageEntityAndFileMapping = handleUploadFiles(uploadFiles)
-        val imageDTOs = s3Service.uploadFile2S3(imageEntityAndFileMapping)
-        imageService.batchInsertImage(imageDTOs)
-        logger.info { "upload success, imgCnt: ${uploadFiles.size}" }
-        cloudreveService.sync2Cloudreve()
+        uploadThreadPool.submit {
+            runBlocking {
+                val uploadFiles = handleNormalZipFile(inputFileBytes)
+                val imageEntityAndFileMapping = handleUploadFiles(uploadFiles)
+                val imageDTOs = s3Service.uploadFile2S3(imageEntityAndFileMapping)
+                imageService.batchInsertImage(imageDTOs)
+                logger.info { "upload success, imgCnt: ${uploadFiles.size}" }
+                cloudreveService.sync2Cloudreve()
+            }
+        }
     }
 
     private suspend fun handleUploadFiles(uploadFiles: List<UploadFile>): Map<ImageDTO, List<UploadFile>> {
