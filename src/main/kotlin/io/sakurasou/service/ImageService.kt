@@ -6,9 +6,11 @@ import io.sakurasou.dao.ImageDAO
 import io.sakurasou.dao.PostImageDAO
 import io.sakurasou.entity.*
 import io.sakurasou.exception.ImageFetchException
+import kotlinx.coroutines.runBlocking
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Service
 import java.time.Duration
+import java.util.concurrent.*
 import kotlin.math.absoluteValue
 
 /**
@@ -25,15 +27,24 @@ class ImageService(
 ) {
 
     private val logger = KotlinLogging.logger { this::class.java }
+    private val imageDeleteThreadPool =
+        ThreadPoolExecutor(
+            1, 2, 1, TimeUnit.MINUTES, LinkedBlockingQueue(),
+            { Thread(it, "async-image-upload-thread") }, ThreadPoolExecutor.AbortPolicy()
+        )
 
     suspend fun batchInsertImage(list: List<ImageDTO>) {
         imageDAO.batchInsert(list)
     }
 
     suspend fun deleteImage(deleteDTO: ImageDeleteDTO) {
-        val needDeletedImages = imageDAO.selectImageByIdOrUid(deleteDTO)
-        imageDAO.deleteImageByIds(needDeletedImages)
-        s3Service.deleteFileFromS3(needDeletedImages)
+        imageDeleteThreadPool.submit {
+            runBlocking {
+                val needDeletedImages = imageDAO.selectImageByIdOrUid(deleteDTO)
+                imageDAO.deleteImageByIds(needDeletedImages)
+                s3Service.deleteFileFromS3(needDeletedImages)
+            }
+        }
     }
 
     suspend fun selectImage(query: ImageQuery): String {
@@ -70,8 +81,10 @@ class ImageService(
             )?.url ?: run {
                 logger.debug { "random img, database miss, key: $key" }
                 val imageDTO = imageDAO.randomSelImage(randomQueryDTO) ?: throw ImageFetchException("no such image")
-                logger.info { "random img, origin: ${query.origin} postId: ${query.postID} " +
-                        "fetch random image successfully, imgId: ${imageDTO.id}" }
+                logger.info {
+                    "random img, origin: ${query.origin} postId: ${query.postID} " +
+                            "fetch random image successfully, imgId: ${imageDTO.id}"
+                }
                 val url = chooseSimilarSize(imageDTO, query.queryConditionMap, query.queryCondition)
                 if (config.persistenceReferer.contains(query.origin)) {
                     postImageDAO.insert(
@@ -91,7 +104,11 @@ class ImageService(
         }
     }
 
-    private fun chooseSimilarSize(imageDTO: ImageDTO, queryConditionMap: Map<String, Any?>, queryCondition: String): String {
+    private fun chooseSimilarSize(
+        imageDTO: ImageDTO,
+        queryConditionMap: Map<String, Any?>,
+        queryCondition: String
+    ): String {
         var url = imageDTO.authority + "/"
         val th = queryConditionMap["th"]?.toString()?.toInt()
         url += if (th != null) {

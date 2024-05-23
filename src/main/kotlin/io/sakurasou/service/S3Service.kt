@@ -57,7 +57,6 @@ class S3Service(
         imageList.forEach { image ->
             runCatching {
                 successCnt++
-                logger.debug { "s3 delete success: ${image.originalSizePath}" }
                 withContext(Dispatchers.IO) {
                     s3Client.deleteObject(bucketName, image.originalSizePath)
                     s3Client.deleteObject(bucketName, image.mediumSizePath)
@@ -68,6 +67,7 @@ class S3Service(
                 return@forEach
             }
         }
+        logger.info { "total delete img: $successCnt" }
         cloudreveService.sync2Cloudreve()
     }
 
