@@ -124,19 +124,35 @@ class ImageDAO(
     suspend fun randomSelImage(randomQueryDTO: ImageRandomQueryDTO): ImageDTO? {
         return withContext(Dispatchers.IO) {
             database.useConnection { connection ->
+                // val condSql = """
+                //     select
+                //         uid, pid, authority, original_width, original_size_path, medium_size_path, minimal_size_path, id
+                //     from images
+                //     where uid = ?
+                //         and rand() < ${config.probability} and is_deleted = 0
+                //     limit 1
+                // """.trimIndent()
+                // val noCondSql = """
+                //     select
+                //         uid, pid, authority, original_width, original_size_path, medium_size_path, minimal_size_path, id
+                //     from images
+                //     where rand() < ${config.probability} and is_deleted = 0
+                //     limit 1
+                // """.trimIndent()
                 val condSql = """
                     select
                         uid, pid, authority, original_width, original_size_path, medium_size_path, minimal_size_path, id
                     from images
-                    where uid = ?
-                        and rand() < ${config.probability} and is_deleted = 0
+                    where uid = ? and is_deleted = 0
+                    order by rand()
                     limit 1
                 """.trimIndent()
                 val noCondSql = """
                     select
                         uid, pid, authority, original_width, original_size_path, medium_size_path, minimal_size_path, id
                     from images
-                    where rand() < ${config.probability} and is_deleted = 0
+                    where is_deleted = 0
+                    order by rand()
                     limit 1
                 """.trimIndent()
                 val sql = if (randomQueryDTO.uid != null) condSql else noCondSql
