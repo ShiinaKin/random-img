@@ -35,11 +35,6 @@ data class ImageDeleteDTO(
     val uid: Long?,
 )
 
-data class ImageDeleteResultDTO(
-    val id: Long,
-    val key: String
-)
-
 data class ImageQuery(
     val id: Long,
     val th: Int?,
@@ -74,8 +69,8 @@ data class ImageDTO(
     val authority: String,
     var originalWidth: Int,
     val originalSizePath: String,
-    var mediumSizePath: String? = null,
-    var minimalSizePath: String? = null,
+    var mediumSizePath: String,
+    var minimalSizePath: String,
     val id: Long? = null
 )
 

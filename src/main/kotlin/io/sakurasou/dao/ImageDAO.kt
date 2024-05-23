@@ -57,9 +57,9 @@ class ImageDAO(
     }
 
     @Transactional
-    suspend fun deleteImageByIds(deleteResultDTOs: List<ImageDeleteResultDTO>) {
+    suspend fun deleteImageByIds(images: List<ImageDTO>) {
         withContext(Dispatchers.IO) {
-            val ids = deleteResultDTOs.map { it.id }
+            val ids = images.map { it.id!! }
             database.batchUpdate(Images) {
                 ids.map { id ->
                     item {
@@ -73,9 +73,9 @@ class ImageDAO(
         }
     }
 
-    suspend fun selectImageByIdOrUid(deleteDTO: ImageDeleteDTO): List<ImageDeleteResultDTO> {
+    suspend fun selectImageByIdOrUid(deleteDTO: ImageDeleteDTO): List<ImageDTO> {
         return withContext(Dispatchers.IO) {
-            database.from(Images).select(id, originalSizePath)
+            database.from(Images).select(uid, pid, authority, originalWidth, originalSizePath, mediumSizePath, minimalSizePath, id)
                 .where { deleted eq false }
                 .where {
                     when {
@@ -84,10 +84,17 @@ class ImageDAO(
                         else -> throw WrongThreadException("must have id or uid")
                     }
                 }
+                .asIterable()
                 .map {
-                    ImageDeleteResultDTO(
-                        it.getLong(1),
-                        it.getString(2)!!
+                    ImageDTO(
+                        it[uid]!!,
+                        it[pid]!!,
+                        it[authority]!!,
+                        it[originalWidth]!!,
+                        it[originalSizePath]!!,
+                        it[mediumSizePath]!!,
+                        it[minimalSizePath]!!,
+                        it[id]
                     )
                 }
         }

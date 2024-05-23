@@ -8,7 +8,6 @@ import com.amazonaws.services.s3.model.S3ObjectSummary
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.sakurasou.config.RandomImgConfig
 import io.sakurasou.entity.ImageDTO
-import io.sakurasou.entity.ImageDeleteResultDTO
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.springframework.stereotype.Service
@@ -52,18 +51,20 @@ class S3Service(
         }
     }
 
-    suspend fun deleteFileFromS3(imageList: List<ImageDeleteResultDTO>) {
+    suspend fun deleteFileFromS3(imageList: List<ImageDTO>) {
         if (imageList.isEmpty()) return
         var successCnt = 0
         imageList.forEach { image ->
             runCatching {
                 successCnt++
-                logger.debug { "s3 delete success: originalSizePath" }
+                logger.debug { "s3 delete success: ${image.originalSizePath}" }
                 withContext(Dispatchers.IO) {
-                    s3Client.deleteObject(bucketName, image.key)
+                    s3Client.deleteObject(bucketName, image.originalSizePath)
+                    s3Client.deleteObject(bucketName, image.mediumSizePath)
+                    s3Client.deleteObject(bucketName, image.minimalSizePath)
                 }
             }.getOrElse {
-                logger.error(it) { "s3 delete failed: ${image.key}" }
+                logger.error(it) { "s3 delete failed: ${image.originalSizePath}" }
                 return@forEach
             }
         }
