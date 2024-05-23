@@ -37,7 +37,7 @@ services:
       PERSISTENCE_REFERER: localhost
       PROBABILITY: 0.01
     volumes:
-      - random-img-data:/application
+      - random-img-data:/application/config
     networks:
       - random-img-net
 
