@@ -12,6 +12,7 @@ class RandomImgConfig {
     lateinit var s3: S3
     lateinit var cloudreve: Cloudreve
     lateinit var persistenceReferer: List<String>
+    lateinit var probability: String
 
     data class BasicAuth(
         val username: String,

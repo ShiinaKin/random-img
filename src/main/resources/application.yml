@@ -3,6 +3,10 @@ server:
 spring:
   application:
     name: random-img
+  servlet:
+    multipart:
+      max-file-size: 300MB
+      max-request-size: 1024MB
   datasource:
     url: ${SPRING_R2DBC_URL}
     username: ${SPRING_R2DBC_USERNAME}
@@ -33,3 +37,4 @@ random-img:
     cloudreve-dist: ${CLOUDREVE_DIST}
     recursive: ${CLOUDREVE_RECURSIVE}
   persistence-hosts: ${PERSISTENCE_HOSTS}
+  probability: 0.01

@@ -1,5 +1,6 @@
 package io.sakurasou.dao
 
+import io.sakurasou.config.RandomImgConfig
 import io.sakurasou.config.SnowFlakeIdGenerator
 import io.sakurasou.entity.*
 import io.sakurasou.entity.Images.authority
@@ -28,7 +29,8 @@ import java.time.LocalDateTime
 class ImageDAO(
     private val database: Database,
     private val idGenerator: SnowFlakeIdGenerator,
-    private val postImageDAO: PostImageDAO
+    private val postImageDAO: PostImageDAO,
+    private val config: RandomImgConfig
 ) {
 
     suspend fun batchInsert(list: List<ImageDTO>) {
@@ -120,14 +122,14 @@ class ImageDAO(
                         uid, pid, authority, original_width, original_size_path, medium_size_path, minimal_size_path, id
                     from images
                     where uid = ?
-                        and rand() < 0.01 and is_deleted = 0
+                        and rand() < ${config.probability} and is_deleted = 0
                     limit 1
                 """.trimIndent()
                 val noCondSql = """
                     select
                         uid, pid, authority, original_width, original_size_path, medium_size_path, minimal_size_path, id
                     from images
-                    where rand() < 0.01 and is_deleted = 0
+                    where rand() < ${config.probability} and is_deleted = 0
                     limit 1
                 """.trimIndent()
                 val sql = if (randomQueryDTO.uid != null) condSql else noCondSql
