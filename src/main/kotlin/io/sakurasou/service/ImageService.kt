@@ -98,13 +98,15 @@ class ImageService(
             val i1 = (th - imageDTO.originalWidth).absoluteValue
             val i2 = (th - ImageSize.MEDIUM_SIZE.size).absoluteValue
             val i3 = (th - ImageSize.MINIMAL_SIZE.size).absoluteValue
-            when {
-                i1 <= i2 && i1 <= i3 -> imageDTO.originalSizePath
-                i2 <= i1 && i2 <= i3 -> imageDTO.mediumSizePath
-                else -> imageDTO.minimalSizePath
+            if (i2 == 0) imageDTO.mediumSizePath
+            else if (i3 == 0) imageDTO.minimalSizePath
+            else when {
+                i1 <= i2 && i1 <= i3 -> "${imageDTO.originalSizePath}?$queryCondition"
+                i2 <= i1 && i2 <= i3 -> "${imageDTO.mediumSizePath}?$queryCondition"
+                else -> "${imageDTO.minimalSizePath}?$queryCondition"
             }
         } else imageDTO.mediumSizePath
-        return "$url?$queryCondition"
+        return url
     }
 
 }
