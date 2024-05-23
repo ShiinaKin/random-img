@@ -35,6 +35,7 @@ services:
       CLOUDREVE_DIST: /
       CLOUDREVE_RECURSIVE: true
       PERSISTENCE_HOSTS: localhost
+      PROBABILITY: 0.01
     volumes:
       - random-img-data:/application
     networks:

@@ -37,4 +37,4 @@ random-img:
     cloudreve-dist: ${CLOUDREVE_DIST}
     recursive: ${CLOUDREVE_RECURSIVE}
   persistence-hosts: ${PERSISTENCE_HOSTS}
-  probability: 0.01
+  probability: ${PROBABILITY}
