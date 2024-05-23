@@ -70,4 +70,7 @@ class ImageController(
         }
     }
 
+    @GetMapping("/health")
+    fun health() {}
+
 }
