@@ -34,7 +34,7 @@ class UploadService(
 
     private val uploadThreadPool = ThreadPoolExecutor(
         2, 4, 2, TimeUnit.MINUTES, LinkedBlockingQueue(),
-        { Thread(it, "async-image-upload-thread") }, ThreadPoolExecutor.AbortPolicy()
+        { Thread(it, "image-upload-thread") }, ThreadPoolExecutor.AbortPolicy()
     )
     private val s3ObjSummaryNeed2UploadSet = mutableSetOf<S3ObjectSummary>()
 

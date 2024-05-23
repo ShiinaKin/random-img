@@ -30,7 +30,7 @@ class ImageService(
     private val imageDeleteThreadPool =
         ThreadPoolExecutor(
             1, 2, 1, TimeUnit.MINUTES, LinkedBlockingQueue(),
-            { Thread(it, "async-image-upload-thread") }, ThreadPoolExecutor.AbortPolicy()
+            { Thread(it, "image-delete-thread") }, ThreadPoolExecutor.AbortPolicy()
         )
 
     suspend fun batchInsertImage(list: List<ImageDTO>) {
@@ -63,14 +63,19 @@ class ImageService(
         val defaultExpire = Duration.ofHours(3)
         val randomQueryDTO = ImageRandomQueryDTO(query.uid)
         if (query.postID.isNullOrBlank()) {
-            logger.debug { "random img, not taken referer and postId" }
             val imageDTO = imageDAO.randomSelImage(randomQueryDTO) ?: throw ImageFetchException("no such image")
             logger.info { "random img, origin: ${query.origin} fetch random image successfully, imgId: ${imageDTO.id}" }
             return chooseSimilarSize(imageDTO, query.queryConditionMap, query.queryCondition)
         }
         val key = "random_img:random:${query.origin}:${query.postID}:${query.queryCondition}"
         logger.debug { "random img, taken referer and post id, redis key: $key" }
-        return redisTemplate.opsForValue().get(key) ?: run {
+        return redisTemplate.opsForValue().get(key)?.let {
+            logger.debug {
+                "random img, origin: ${query.origin} postId: ${query.postID}, cache hit, " +
+                        "imgUrl: $it"
+            }
+            it
+        } ?: run {
             logger.debug { "random img, cache miss, key: $key" }
             postImageDAO.selectImageByPostId(
                 PostImageQueryByPostIdDTO(
@@ -78,12 +83,17 @@ class ImageService(
                     query.postID,
                     query.queryCondition
                 )
-            )?.url ?: run {
-                logger.debug { "random img, database miss, key: $key" }
+            )?.let {
+                logger.debug {
+                    "random img, origin: ${query.origin} postId: ${query.postID}, database hit, " +
+                            "imgId: ${it.imageId}"
+                }
+                it.url
+            } ?: run {
                 val imageDTO = imageDAO.randomSelImage(randomQueryDTO) ?: throw ImageFetchException("no such image")
-                logger.info {
+                logger.debug {
                     "random img, origin: ${query.origin} postId: ${query.postID} " +
-                            "fetch random image successfully, imgId: ${imageDTO.id}"
+                            "database miss, fetch random image successfully, imgId: ${imageDTO.id}"
                 }
                 val url = chooseSimilarSize(imageDTO, query.queryConditionMap, query.queryCondition)
                 if (config.persistenceReferer.contains(query.origin)) {
@@ -96,7 +106,7 @@ class ImageService(
                             url
                         )
                     )
-                    logger.debug { "random img, persistence success" }
+                    logger.debug { "random img, origin: ${query.origin} postId: ${query.postID}, persistence success" }
                 }
                 redisTemplate.opsForValue().set(key, url, defaultExpire)
                 url
