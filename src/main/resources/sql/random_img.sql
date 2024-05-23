@@ -1,29 +1,33 @@
 create table if not exists images
 (
-    id          bigint                  not null
+    id                 bigint               not null
         primary key,
-    uid         bigint      default 0   not null,
-    pid         varchar(64) default '0' not null,
-    url         varchar(255)            not null,
-    path        varchar(128)            not null,
-    create_time datetime                not null,
-    update_time datetime                not null,
-    is_deleted  tinyint(1)  default 0   not null,
+    uid                bigint               not null,
+    pid                varchar(64)          not null,
+    authority          varchar(64)          not null,
+    original_width     int                  not null,
+    original_size_path varchar(128)         not null,
+    medium_size_path   varchar(128)         not null,
+    minimal_size_path  varchar(128)         not null,
+    create_time        datetime             not null,
+    update_time        datetime             not null,
+    is_deleted         tinyint(1) default 0 not null,
     constraint uk_path
-        unique (path)
+        unique (original_size_path)
 );
-
+# ---
 create table if not exists post_images
 (
-    id          bigint               not null
+    id              bigint               not null
         primary key,
-    source      varchar(255)         not null comment 'uuid所属来源',
-    post_id     char(36)             not null,
-    image_id    bigint               not null,
-    url         varchar(255)         not null,
-    create_time datetime             not null,
-    update_time datetime             not null,
-    is_deleted  tinyint(1) default 0 not null,
-    constraint uk_source_post_id
-        unique (source, post_id)
+    origin          varchar(64)          not null comment 'postId所属来源',
+    post_id         varchar(60)          not null,
+    image_id        bigint               not null,
+    query_condition varchar(64)          not null,
+    url             varchar(160)         not null,
+    create_time     datetime             not null,
+    update_time     datetime             not null,
+    is_deleted      tinyint(1) default 0 not null,
+    constraint uk_source_post_id_img_id_query_cond_url
+        unique (origin, post_id, image_id, query_condition, url)
 );
