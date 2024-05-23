@@ -1,5 +1,6 @@
 package io.sakurasou.interceptor
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.sakurasou.annotation.BasicAuth
 import io.sakurasou.config.RandomImgConfig
 import jakarta.servlet.http.HttpServletRequest
@@ -19,9 +20,11 @@ import org.springframework.web.servlet.HandlerInterceptor
 class BasicAuthorizationInterceptor(
     config: RandomImgConfig
 ): HandlerInterceptor {
+    private val logger = KotlinLogging.logger { this::class.java }
     private val basicAuth = config.basicAuth
 
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
+        logger.info { "handle request, path: ${request.requestURI}" }
         val effectivePath = setOf("/", "/remote-upload", "/random")
         if (!effectivePath.contains(request.servletPath)) {
             response.status = HttpStatus.FORBIDDEN.value()

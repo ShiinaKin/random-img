@@ -63,3 +63,4 @@ networks:
 
 volumes:
   random-img-data:
+    name: random-img-data
