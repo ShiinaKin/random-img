@@ -44,7 +44,7 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp")
 
     implementation("org.springframework.boot:spring-boot-starter-jdbc")
-    compileOnly("org.ktorm:ktorm-core:$ktormVersion")
+    implementation("org.ktorm:ktorm-core:$ktormVersion")
     runtimeOnly("com.mysql:mysql-connector-j")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
