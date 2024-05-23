@@ -9,10 +9,13 @@ import io.sakurasou.service.ImageService
 import io.sakurasou.service.UploadService
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.future.future
 import kotlinx.coroutines.withContext
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
+import java.util.concurrent.*
 
 /**
  * @author mashirot
@@ -24,6 +27,7 @@ class ImageController(
     private val imageService: ImageService,
     private val uploadService: UploadService
 ) {
+    private val defaultScope = CoroutineScope(Dispatchers.Default)
 
     @BasicAuth
     @PostMapping("/")
@@ -32,9 +36,11 @@ class ImageController(
     }
 
     @BasicAuth
-    @PostMapping("/remote-upload")
-    suspend fun remoteUpload(num: Int = 1) {
-        uploadService.handleRemoteUpload(num)
+    @PutMapping("/remote-upload")
+    suspend fun remoteUpload(num: Int = 1): CompletableFuture<Unit> {
+        return defaultScope.future {
+            uploadService.handleRemoteUpload(num)
+        }
     }
 
     @BasicAuth
