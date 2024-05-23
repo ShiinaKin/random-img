@@ -36,5 +36,5 @@ random-img:
     s3-src: ${CLOUDREVE_S3_SRC}
     cloudreve-dist: ${CLOUDREVE_DIST}
     recursive: ${CLOUDREVE_RECURSIVE}
-  persistence-hosts: ${PERSISTENCE_HOSTS}
+  persistence-referer: ${PERSISTENCE_REFERER}
   probability: ${PROBABILITY}
