@@ -49,7 +49,7 @@ class ImageService(
     }
 
     suspend fun deleteImage(deleteDTO: ImageDeleteDTO) {
-        imageDeleteThreadPool.submit {
+        imageDeleteThreadPool.execute {
             runBlocking {
                 isDeleting.set(true)
                 val needDeletedImages = imageDAO.selectImageByIdOrUid(deleteDTO)
@@ -83,7 +83,7 @@ class ImageService(
             logger.warn { "clearing is already being performed, please do not repeat request." }
             return
         }
-        imageDeleteThreadPool.submit {
+        imageDeleteThreadPool.execute {
             runBlocking {
                 isDeleting.set(true)
                 imageDAO.deleteAllImagePhysically()

@@ -47,7 +47,7 @@ class UploadService(
     private val cdnUrl = config.s3.cdnUrl
 
     suspend fun handleRemoteUpload(uploadNum: Int) {
-        uploadThreadPool.submit {
+        uploadThreadPool.execute {
             runBlocking {
                 var objectSummaries =
                     s3Service.listUploadBucket().filter { !s3ObjSummaryNeed2UploadSet.contains(it.key) }
