@@ -36,22 +36,22 @@ class UploadService(
         2, 4, 2, TimeUnit.MINUTES, LinkedBlockingQueue(),
         { Thread(it, "image-upload-thread") }, ThreadPoolExecutor.AbortPolicy()
     )
-    private val s3ObjSummaryNeed2UploadSet = mutableSetOf<S3ObjectSummary>()
+    private val s3ObjSummaryNeed2UploadSet = mutableSetOf<String>()
 
     private val cdnUrl = config.s3.cdnUrl
 
     suspend fun handleRemoteUpload(uploadNum: Int) {
         uploadThreadPool.submit {
             runBlocking {
-                var objectSummaries = s3Service.listUploadBucket().filter { !s3ObjSummaryNeed2UploadSet.contains(it) }
+                var objectSummaries = s3Service.listUploadBucket().filter { !s3ObjSummaryNeed2UploadSet.contains(it.key) }
                 objectSummaries = if (objectSummaries.size <= uploadNum) objectSummaries
                 else objectSummaries.subList(0, uploadNum)
-                objectSummaries.forEach { s3ObjSummaryNeed2UploadSet.add(it) }
-                logger.info { "submit task to thread pool, ${objectSummaries.size} files need to upload" }
+                objectSummaries.forEach { s3ObjSummaryNeed2UploadSet.add(it.key) }
+                logger.info { "submit task to thread pool, ${objectSummaries.map { it.key }} need to upload" }
                 val pairs = objectSummaries.map { objSummary ->
                     handleS3ObjectSummary(objSummary).let {
                         if (it.first) {
-                            s3ObjSummaryNeed2UploadSet.remove(objSummary)
+                            s3ObjSummaryNeed2UploadSet.remove(objSummary.key)
                             s3Service.delObjFromUploadBucket(objSummary.key)
                         }
                         it.second
