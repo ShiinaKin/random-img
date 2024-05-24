@@ -16,6 +16,7 @@ import java.time.Duration
 import java.util.*
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.absoluteValue
 
 /**
@@ -34,8 +35,11 @@ class ImageService(
     private val logger = KotlinLogging.logger { this::class.java }
     private val imageDeleteThreadPool =
         ThreadPoolExecutor(
-            1, 2, 1, TimeUnit.MINUTES, LinkedBlockingQueue(),
-            { Thread(it, "image-delete-thread") }, ThreadPoolExecutor.AbortPolicy()
+            2, 2, 0, TimeUnit.MILLISECONDS, LinkedBlockingQueue(),
+            {
+                val id = AtomicInteger(0)
+                Thread(it, "image-delete-thread-${id.getAndIncrement()}")
+            }, ThreadPoolExecutor.AbortPolicy()
         )
     private val isDeleting = AtomicBoolean(false)
 

@@ -15,6 +15,7 @@ import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
 import java.time.Instant
 import java.util.concurrent.*
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.zip.*
 import javax.imageio.ImageIO
 
@@ -33,8 +34,11 @@ class UploadService(
     private val logger = KotlinLogging.logger { this::class.java }
 
     private val uploadThreadPool = ThreadPoolExecutor(
-        2, 4, 2, TimeUnit.MINUTES, LinkedBlockingQueue(),
-        { Thread(it, "image-upload-thread") }, ThreadPoolExecutor.AbortPolicy()
+        3, 3, 0, TimeUnit.MILLISECONDS, LinkedBlockingQueue(),
+        {
+            val id = AtomicInteger(0)
+            Thread(it, "image-upload-thread-${id.getAndIncrement()}")
+        }, ThreadPoolExecutor.AbortPolicy()
     )
     private val s3ObjSummaryNeed2UploadSet = mutableSetOf<String>()
 
@@ -47,6 +51,10 @@ class UploadService(
                 objectSummaries = if (objectSummaries.size <= uploadNum) objectSummaries
                 else objectSummaries.subList(0, uploadNum)
                 objectSummaries.forEach { s3ObjSummaryNeed2UploadSet.add(it.key) }
+                if (objectSummaries.isEmpty()) {
+                    logger.info { "no object need to upload" }
+                    return@runBlocking
+                }
                 logger.info { "submit task to thread pool, ${objectSummaries.map { it.key }} need to upload" }
                 val pairs = objectSummaries.map { objSummary ->
                     handleS3ObjectSummary(objSummary).let {
