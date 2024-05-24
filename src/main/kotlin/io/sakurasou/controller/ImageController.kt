@@ -42,6 +42,12 @@ class ImageController(
         imageService.deleteImage(ImageDeleteDTO(id, uid))
     }
 
+    @BasicAuth
+    @DeleteMapping("/delete-all")
+    suspend fun deleteAllImage(token: String?) {
+        imageService.deleteAllImage(token)
+    }
+
     @GetMapping("/")
     suspend fun selectImage(
         httpRequest: HttpServletRequest,

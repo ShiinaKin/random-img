@@ -51,7 +51,7 @@ class S3Service(
         }
     }
 
-    suspend fun deleteFileFromS3(imageList: List<ImageDTO>) {
+    suspend fun deleteImageFromS3(imageList: List<ImageDTO>) {
         if (imageList.isEmpty()) return
         var successCnt = 0
         imageList.forEach { image ->
@@ -73,6 +73,15 @@ class S3Service(
         }
         logger.info { "total delete img: $successCnt" }
         cloudreveService.sync2Cloudreve()
+    }
+
+    fun clearImageBucket() {
+        val objectSummaries = s3Client.listObjectsV2(bucketName).objectSummaries
+        logger.info { "submit task to thread, need to delete ${objectSummaries.size} files" }
+        objectSummaries.forEach {
+            s3Client.deleteObject(bucketName, it.key)
+        }
+        logger.info { "clear image bucket success" }
     }
 
     suspend fun listUploadBucket(): List<S3ObjectSummary> =

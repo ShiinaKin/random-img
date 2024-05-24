@@ -68,6 +68,7 @@ class UploadService(
         uploadThreadPool.submit {
             runBlocking {
                 val uploadFiles = handleNormalZipFile(inputFileBytes)
+                logger.info { "submit task to thread pool, ${uploadFiles.size} files need to upload" }
                 val imageEntityAndFileMapping = handleUploadFiles(uploadFiles)
                 val imageDTOs = s3Service.uploadFile2S3(imageEntityAndFileMapping)
                 imageService.batchInsertImage(imageDTOs)

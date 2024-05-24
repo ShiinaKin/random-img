@@ -81,6 +81,14 @@ class ImageDAO(
         }
     }
 
+    @Transactional
+    suspend fun deleteAllImagePhysically() {
+        withContext(Dispatchers.IO) {
+            database.deleteAll(Images)
+            database.deleteAll(PostImages)
+        }
+    }
+
     suspend fun selectImageByIdOrUid(deleteDTO: ImageDeleteDTO): List<ImageDTO> {
         return withContext(Dispatchers.IO) {
             database.from(Images).select(
