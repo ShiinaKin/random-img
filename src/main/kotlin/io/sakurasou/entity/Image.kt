@@ -11,9 +11,13 @@ class Image : BaseEntity() {
     var pid: String? = null
     var authority: String? = null
     var originalWidth: Int? = null
-    var originalSizePath: String? = null
-    var mediumSizePath: String? = null
-    var minimalSizePath: String? = null
+    var originalPath: String? = null
+    var w1920Path: String? = null
+    var w1600Path: String? = null
+    var w1280Path: String? = null
+    var w960Path: String? = null
+    var w640Path: String? = null
+    var w320Path: String? = null
 }
 
 object Images : Table<Nothing>("images") {
@@ -22,9 +26,13 @@ object Images : Table<Nothing>("images") {
     val pid = varchar("pid")
     val authority = varchar("authority")
     val originalWidth = int("original_width")
-    val originalSizePath = varchar("original_size_path")
-    val mediumSizePath = varchar("medium_size_path")
-    val minimalSizePath = varchar("minimal_size_path")
+    val originalPath = varchar("original_path")
+    val w1920Path = varchar("width_1920_path")
+    val w1600Path = varchar("width_1600_path")
+    val w1280Path = varchar("width_1280_path")
+    val w960Path = varchar("width_960_path")
+    val w640Path = varchar("width_640_path")
+    val w320Path = varchar("width_320_path")
     val createTime = datetime("create_time")
     val updateTime = datetime("update_time")
     val deleted = boolean("is_deleted")
@@ -68,13 +76,21 @@ data class ImageDTO(
     val pid: String,
     val authority: String,
     var originalWidth: Int,
-    val originalSizePath: String,
-    var mediumSizePath: String,
-    var minimalSizePath: String,
+    val originalPath: String,
+    val w1920Path: String,
+    val w1600Path: String,
+    val w1280Path: String,
+    val w960Path: String,
+    val w640Path: String,
+    val w320Path: String,
     val id: Long? = null
 )
 
 enum class ImageSize(val size: Int) {
-    MEDIUM_SIZE(1280),
-    MINIMAL_SIZE(640)
+    W_1920(1920),
+    W_1600(1600),
+    W_1280(1280),
+    W_960(960),
+    W_640(640),
+    W_320(320)
 }

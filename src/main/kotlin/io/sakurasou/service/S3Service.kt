@@ -58,12 +58,16 @@ class S3Service(
             runCatching {
                 successCnt++
                 withContext(Dispatchers.IO) {
-                    s3Client.deleteObject(bucketName, image.originalSizePath)
-                    s3Client.deleteObject(bucketName, image.mediumSizePath)
-                    s3Client.deleteObject(bucketName, image.minimalSizePath)
+                    s3Client.deleteObject(bucketName, image.originalPath)
+                    s3Client.deleteObject(bucketName, image.w1920Path)
+                    s3Client.deleteObject(bucketName, image.w1600Path)
+                    s3Client.deleteObject(bucketName, image.w1280Path)
+                    s3Client.deleteObject(bucketName, image.w960Path)
+                    s3Client.deleteObject(bucketName, image.w640Path)
+                    s3Client.deleteObject(bucketName, image.w320Path)
                 }
             }.getOrElse {
-                logger.error(it) { "s3 delete failed: ${image.originalSizePath}" }
+                logger.error(it) { "s3 delete failed: ${image.originalPath}" }
                 return@forEach
             }
         }

@@ -78,25 +78,17 @@ class UploadService(
     }
 
     private suspend fun handleUploadFiles(uploadFiles: List<UploadFile>): Map<ImageDTO, List<UploadFile>> {
-        suspend fun handleMinimal(image: BufferedImage, rawFile: UploadFile): UploadFile {
-            val minimal = ImageUtils.resize(image, 640)
-            val path = rawFile.path.split(".").let {
-                "${it[0]}_minimal_size.webp"
-            }
+        suspend fun handleResizeImage(
+            image: BufferedImage,
+            rawFile: UploadFile,
+            fileNamePrefix: String,
+            imageSize: ImageSize
+        ): UploadFile {
+            val nImage = ImageUtils.resize(image, imageSize.size)
+            val path = "${fileNamePrefix}_width_${imageSize.size}.webp"
             return UploadFile(
                 rawFile.uid, rawFile.pid, path,
-                minimal, minimal.size.toLong(), Instant.now()
-            )
-        }
-
-        suspend fun handleMedium(image: BufferedImage, rawFile: UploadFile): UploadFile {
-            val medium = ImageUtils.resize(image, 1280)
-            val path = rawFile.path.split(".").let {
-                "${it[0]}_medium_size.webp"
-            }
-            return UploadFile(
-                rawFile.uid, rawFile.pid, path,
-                medium, medium.size.toLong(), Instant.now()
+                nImage, nImage.size.toLong(), Instant.now()
             )
         }
 
@@ -105,46 +97,28 @@ class UploadService(
             ByteArrayInputStream(rawFile.content).use { bis ->
                 val image = ImageIO.read(bis)
                 val width = image.width
-                when {
-                    width <= ImageSize.MINIMAL_SIZE.size -> {
-                        val imageDTO = ImageDTO(
-                            rawFile.uid, rawFile.pid, cdnUrl, width,
-                            rawFile.path, rawFile.path, rawFile.path, null
-                        )
-                        map[imageDTO] = listOf(rawFile)
-                    }
-
-                    width <= ImageSize.MEDIUM_SIZE.size -> {
-                        val minimal = handleMinimal(image, rawFile)
-                        val imageDTO = ImageDTO(
-                            rawFile.uid,
-                            rawFile.pid,
-                            cdnUrl,
-                            originalWidth = width,
-                            originalSizePath = rawFile.path,
-                            mediumSizePath = rawFile.path,
-                            minimalSizePath = minimal.path,
-                            null
-                        )
-                        map[imageDTO] = listOf(rawFile, minimal)
-                    }
-
-                    else -> {
-                        val minimal = handleMinimal(image, rawFile)
-                        val medium = handleMedium(image, rawFile)
-                        val imageDTO = ImageDTO(
-                            rawFile.uid,
-                            rawFile.pid,
-                            cdnUrl,
-                            originalWidth = width,
-                            originalSizePath = rawFile.path,
-                            mediumSizePath = medium.path,
-                            minimalSizePath = minimal.path,
-                            null
-                        )
-                        map[imageDTO] = listOf(rawFile, minimal, medium)
-                    }
-                }
+                val fileNamePrefix = rawFile.path.split(".")[0]
+                val w320 = handleResizeImage(image, rawFile, fileNamePrefix, ImageSize.W_320)
+                val w640 = handleResizeImage(image, rawFile, fileNamePrefix, ImageSize.W_640)
+                val w960 = handleResizeImage(image, rawFile, fileNamePrefix, ImageSize.W_960)
+                val w1280 = handleResizeImage(image, rawFile, fileNamePrefix, ImageSize.W_1280)
+                val w1600 = handleResizeImage(image, rawFile, fileNamePrefix, ImageSize.W_1600)
+                val w1920 = handleResizeImage(image, rawFile, fileNamePrefix, ImageSize.W_1920)
+                val imageDTO = ImageDTO(
+                    rawFile.uid,
+                    rawFile.pid,
+                    cdnUrl,
+                    originalWidth = width,
+                    originalPath = rawFile.path,
+                    w1920Path = w1920.path,
+                    w1600Path = w1600.path,
+                    w1280Path = w1280.path,
+                    w960Path = w960.path,
+                    w640Path = w640.path,
+                    w320Path = w320.path,
+                    null
+                )
+                map[imageDTO] = listOf(rawFile, w1920, w1600, w1280, w960, w640, w320)
             }
         }
         return map

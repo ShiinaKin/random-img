@@ -6,12 +6,16 @@ import io.sakurasou.entity.*
 import io.sakurasou.entity.Images.authority
 import io.sakurasou.entity.Images.deleted
 import io.sakurasou.entity.Images.id
-import io.sakurasou.entity.Images.mediumSizePath
-import io.sakurasou.entity.Images.minimalSizePath
-import io.sakurasou.entity.Images.originalSizePath
+import io.sakurasou.entity.Images.originalPath
 import io.sakurasou.entity.Images.originalWidth
 import io.sakurasou.entity.Images.pid
 import io.sakurasou.entity.Images.uid
+import io.sakurasou.entity.Images.w1280Path
+import io.sakurasou.entity.Images.w1600Path
+import io.sakurasou.entity.Images.w1920Path
+import io.sakurasou.entity.Images.w320Path
+import io.sakurasou.entity.Images.w640Path
+import io.sakurasou.entity.Images.w960Path
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.ktorm.database.Database
@@ -44,9 +48,13 @@ class ImageDAO(
                         set(it.pid, image.pid)
                         set(it.authority, image.authority)
                         set(it.originalWidth, image.originalWidth)
-                        set(it.originalSizePath, image.originalSizePath)
-                        set(it.mediumSizePath, image.mediumSizePath)
-                        set(it.minimalSizePath, image.minimalSizePath)
+                        set(it.originalPath, image.originalPath)
+                        set(it.w1920Path, image.w1920Path)
+                        set(it.w1600Path, image.w1600Path)
+                        set(it.w1280Path, image.w1280Path)
+                        set(it.w960Path, image.w960Path)
+                        set(it.w640Path, image.w640Path)
+                        set(it.w320Path, image.w320Path)
                         set(it.createTime, now)
                         set(it.updateTime, now)
                         set(it.deleted, false)
@@ -75,7 +83,20 @@ class ImageDAO(
 
     suspend fun selectImageByIdOrUid(deleteDTO: ImageDeleteDTO): List<ImageDTO> {
         return withContext(Dispatchers.IO) {
-            database.from(Images).select(uid, pid, authority, originalWidth, originalSizePath, mediumSizePath, minimalSizePath, id)
+            database.from(Images).select(
+                uid,
+                pid,
+                authority,
+                originalWidth,
+                originalPath,
+                w1920Path,
+                w1600Path,
+                w1280Path,
+                w960Path,
+                w640Path,
+                w320Path,
+                id
+            )
                 .whereWithConditions {
                     it += deleted eq false
                     it += when {
@@ -91,9 +112,13 @@ class ImageDAO(
                         it[pid]!!,
                         it[authority]!!,
                         it[originalWidth]!!,
-                        it[originalSizePath]!!,
-                        it[mediumSizePath]!!,
-                        it[minimalSizePath]!!,
+                        it[originalPath]!!,
+                        it[w1920Path]!!,
+                        it[w1600Path]!!,
+                        it[w1280Path]!!,
+                        it[w960Path]!!,
+                        it[w640Path]!!,
+                        it[w320Path]!!,
                         it[id]
                     )
                 }
@@ -103,7 +128,20 @@ class ImageDAO(
     suspend fun selectImage(imageQueryDTO: ImageQueryDTO): ImageDTO? {
         return withContext(Dispatchers.IO) {
             database.from(Images)
-                .select(uid, pid, authority, originalWidth, originalSizePath, mediumSizePath, minimalSizePath, id)
+                .select(
+                    uid,
+                    pid,
+                    authority,
+                    originalWidth,
+                    originalPath,
+                    w1920Path,
+                    w1600Path,
+                    w1280Path,
+                    w960Path,
+                    w640Path,
+                    w320Path,
+                    id
+                )
                 .where { id eq imageQueryDTO.id }
                 .asIterable().firstOrNull()
                 ?.let {
@@ -112,9 +150,13 @@ class ImageDAO(
                         it[pid]!!,
                         it[authority]!!,
                         it[originalWidth]!!,
-                        it[originalSizePath]!!,
-                        it[mediumSizePath]!!,
-                        it[minimalSizePath]!!,
+                        it[originalPath]!!,
+                        it[w1920Path]!!,
+                        it[w1600Path]!!,
+                        it[w1280Path]!!,
+                        it[w960Path]!!,
+                        it[w640Path]!!,
+                        it[w320Path]!!,
                         it[id]
                     )
                 }
@@ -126,7 +168,9 @@ class ImageDAO(
             database.useConnection { connection ->
                 // val condSql = """
                 //     select
-                //         uid, pid, authority, original_width, original_size_path, medium_size_path, minimal_size_path, id
+                //         uid, pid, authority, original_width, original_path,
+                //         width_1920_path, width_1600_path, width_1280_path, width_960_path, width_640_path, width_320_path,
+                //         id
                 //     from images
                 //     where uid = ?
                 //         and rand() < ${config.probability} and is_deleted = 0
@@ -134,14 +178,18 @@ class ImageDAO(
                 // """.trimIndent()
                 // val noCondSql = """
                 //     select
-                //         uid, pid, authority, original_width, original_size_path, medium_size_path, minimal_size_path, id
+                //         uid, pid, authority, original_width, original_path,
+                //         width_1920_path, width_1600_path, width_1280_path, width_960_path, width_640_path, width_320_path,
+                //         id
                 //     from images
                 //     where rand() < ${config.probability} and is_deleted = 0
                 //     limit 1
                 // """.trimIndent()
                 val condSql = """
                     select
-                        uid, pid, authority, original_width, original_size_path, medium_size_path, minimal_size_path, id
+                        uid, pid, authority, original_width, original_path, 
+                        width_1920_path, width_1600_path, width_1280_path, width_960_path, width_640_path, width_320_path, 
+                        id
                     from images
                     where uid = ? and is_deleted = 0
                     order by rand()
@@ -149,7 +197,9 @@ class ImageDAO(
                 """.trimIndent()
                 val noCondSql = """
                     select
-                        uid, pid, authority, original_width, original_size_path, medium_size_path, minimal_size_path, id
+                        uid, pid, authority, original_width, original_path, 
+                        width_1920_path, width_1600_path, width_1280_path, width_960_path, width_640_path, width_320_path, 
+                        id
                     from images
                     where is_deleted = 0
                     order by rand()
@@ -168,7 +218,11 @@ class ImageDAO(
                                 it.getString(5),
                                 it.getString(6),
                                 it.getString(7),
-                                it.getLong(8)
+                                it.getString(8),
+                                it.getString(9),
+                                it.getString(10),
+                                it.getString(11),
+                                it.getLong(12)
                             )
                         }
                 }

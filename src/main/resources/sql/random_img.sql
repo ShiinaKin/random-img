@@ -1,19 +1,23 @@
 create table if not exists images
 (
-    id                 bigint               not null
+    id              bigint               not null
         primary key,
-    uid                bigint               not null,
-    pid                varchar(64)          not null,
-    authority          varchar(64)          not null,
-    original_width     int                  not null,
-    original_size_path varchar(128)         not null,
-    medium_size_path   varchar(128)         not null,
-    minimal_size_path  varchar(128)         not null,
-    create_time        datetime             not null,
-    update_time        datetime             not null,
-    is_deleted         tinyint(1) default 0 not null,
+    uid             bigint               not null,
+    pid             varchar(64)          not null,
+    authority       varchar(64)          not null,
+    original_width  int                  not null,
+    original_path   varchar(128)         not null,
+    width_1920_path varchar(128)         not null,
+    width_1600_path varchar(128)         not null,
+    width_1280_path varchar(128)         not null,
+    width_960_path  varchar(128)         not null,
+    width_640_path  varchar(128)         not null,
+    width_320_path  varchar(128)         not null,
+    create_time     datetime             not null,
+    update_time     datetime             not null,
+    is_deleted      tinyint(1) default 0 not null,
     constraint uk_path
-        unique (original_size_path, is_deleted)
+        unique (original_path, is_deleted)
 );
 # ---
 create table if not exists post_images
