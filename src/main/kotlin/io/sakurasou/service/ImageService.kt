@@ -88,7 +88,7 @@ class ImageService(
         }
     }
 
-    suspend fun clearImageSelectCache() {
+    suspend fun clearSelectImageCache() {
         withContext(Dispatchers.IO) {
             redisTemplate.keys("random_img:select:*").forEach {
                 redisTemplate.delete(it)
@@ -96,7 +96,7 @@ class ImageService(
         }
     }
 
-    suspend fun clearImageRandomCache() {
+    suspend fun clearRandomImageCache() {
         withContext(Dispatchers.IO) {
             redisTemplate.keys("random_img:random:*").forEach {
                 redisTemplate.delete(it)

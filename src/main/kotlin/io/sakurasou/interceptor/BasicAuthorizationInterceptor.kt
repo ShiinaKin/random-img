@@ -18,11 +18,15 @@ import org.springframework.web.servlet.HandlerInterceptor
 @Component
 class BasicAuthorizationInterceptor(
     config: RandomImgConfig
-): HandlerInterceptor {
+) : HandlerInterceptor {
     private val basicAuth = config.basicAuth
 
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
-        val effectivePath = setOf("/", "/remote-upload", "/random", "/health")
+        val effectivePath = setOf(
+            "/", "/remote-upload", "/delete-all",
+            "/cache/select", "/cache/random",
+            "/random", "/health"
+        )
         if (!effectivePath.contains(request.servletPath)) {
             response.status = HttpStatus.FORBIDDEN.value()
             return false

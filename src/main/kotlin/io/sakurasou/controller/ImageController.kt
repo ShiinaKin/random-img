@@ -48,6 +48,18 @@ class ImageController(
         imageService.deleteAllImage(token)
     }
 
+    @BasicAuth
+    @DeleteMapping("/cache/select")
+    suspend fun clearSelectImageCache() {
+        imageService.clearSelectImageCache()
+    }
+
+    @BasicAuth
+    @DeleteMapping("/cache/random")
+    suspend fun clearRandomImageCache() {
+        imageService.clearRandomImageCache()
+    }
+
     @GetMapping("/")
     suspend fun selectImage(
         httpRequest: HttpServletRequest,
