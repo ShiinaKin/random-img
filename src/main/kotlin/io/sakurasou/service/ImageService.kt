@@ -198,13 +198,13 @@ class ImageService(
             else if (i6 == 0) imageDTO.w640Path
             else if (i7 == 0) imageDTO.w320Path
             else when {
-                i1 < i2 && i1 < i3 && i1 < i4 && i1 < i5 && i1 < i6 && i1 < i7 -> imageDTO.w1920Path
-                i2 < i1 && i2 < i3 && i2 < i4 && i2 < i5 && i2 < i6 && i2 < i7 -> imageDTO.w1600Path
-                i3 < i1 && i3 < i2 && i3 < i4 && i3 < i5 && i3 < i6 && i3 < i7 -> imageDTO.w1280Path
-                i4 < i1 && i4 < i2 && i4 < i3 && i4 < i5 && i4 < i6 && i4 < i7 -> imageDTO.w960Path
-                i5 < i1 && i5 < i2 && i5 < i3 && i5 < i4 && i5 < i6 && i5 < i7 -> imageDTO.w640Path
-                i6 < i1 && i6 < i2 && i6 < i3 && i6 < i4 && i6 < i5 && i6 < i7 -> imageDTO.w320Path
-                else -> imageDTO.originalPath
+                i1 < i2 && i1 < i3 && i1 < i4 && i1 < i5 && i1 < i6 && i1 < i7 -> imageDTO.originalPath
+                i2 < i1 && i2 < i3 && i2 < i4 && i2 < i5 && i2 < i6 && i2 < i7 -> imageDTO.w1920Path
+                i3 < i1 && i3 < i2 && i3 < i4 && i3 < i5 && i3 < i6 && i3 < i7 -> imageDTO.w1600Path
+                i4 < i1 && i4 < i2 && i4 < i3 && i4 < i5 && i4 < i6 && i4 < i7 -> imageDTO.w1280Path
+                i5 < i1 && i5 < i2 && i5 < i3 && i5 < i4 && i5 < i6 && i5 < i7 -> imageDTO.w960Path
+                i6 < i1 && i6 < i2 && i6 < i3 && i6 < i4 && i6 < i5 && i6 < i7 -> imageDTO.w640Path
+                else -> imageDTO.w320Path
             } + "?$queryCondition"
         } else imageDTO.w1280Path
         return url
