@@ -14,7 +14,9 @@ import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Service
 import java.time.Duration
 import java.util.*
-import java.util.concurrent.*
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.absoluteValue
@@ -33,13 +35,12 @@ class ImageService(
 ) {
 
     private val logger = KotlinLogging.logger { this::class.java }
+    val threadId = AtomicInteger(0)
     private val imageDeleteThreadPool =
         ThreadPoolExecutor(
             2, 2, 0, TimeUnit.MILLISECONDS, LinkedBlockingQueue(),
-            {
-                val id = AtomicInteger(0)
-                Thread(it, "image-delete-thread-${id.getAndIncrement()}")
-            }, ThreadPoolExecutor.AbortPolicy()
+            { Thread(it, "image-delete-thread-${threadId.getAndIncrement()}") },
+            ThreadPoolExecutor.AbortPolicy()
         )
     private val isDeleting = AtomicBoolean(false)
 
