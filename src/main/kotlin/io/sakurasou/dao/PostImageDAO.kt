@@ -94,6 +94,7 @@ class PostImageDAO(
                 .where {
                     (origin eq postImageQueryByPostIdDTO.origin) and
                     (postId eq postImageQueryByPostIdDTO.postId) and
+                    (queryCondition eq postImageQueryByPostIdDTO.queryCondition) and
                     (deleted eq false)
                 }
                 .asIterable().firstOrNull()

@@ -133,7 +133,7 @@ class ImageService(
         logger.debug { "random img, taken referer and post id, redis key: $key" }
         return redisTemplate.opsForValue().get(key)?.let {
             logger.debug {
-                "random img, origin: ${query.origin} postId: ${query.postID}, cache hit, " +
+                "random img, origin: ${query.origin} postId: ${query.postID}, queryCondition: ${query.queryCondition} cache hit, " +
                         "imgUrl: $it"
             }
             it
