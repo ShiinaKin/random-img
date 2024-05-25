@@ -18,7 +18,6 @@ import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.absoluteValue
 
 /**
@@ -35,11 +34,10 @@ class ImageService(
 ) {
 
     private val logger = KotlinLogging.logger { this::class.java }
-    val threadId = AtomicInteger(0)
     private val imageDeleteThreadPool =
         ThreadPoolExecutor(
-            2, 2, 0, TimeUnit.MILLISECONDS, LinkedBlockingQueue(),
-            { Thread(it, "image-delete-thread-${threadId.getAndIncrement()}") },
+            1, 1, 0, TimeUnit.MILLISECONDS, LinkedBlockingQueue(),
+            { Thread(it, "image-delete-thread") },
             ThreadPoolExecutor.AbortPolicy()
         )
     private val isDeleting = AtomicBoolean(false)
@@ -53,6 +51,7 @@ class ImageService(
             runBlocking {
                 isDeleting.set(true)
                 val needDeletedImages = imageDAO.selectImageByIdOrUid(deleteDTO)
+                    .ifEmpty { throw ImageFetchException("no such image") }
                 imageDAO.deleteImageByIds(needDeletedImages)
                 s3Service.deleteImageFromS3(needDeletedImages)
                 isDeleting.set(false)
@@ -142,15 +141,25 @@ class ImageService(
             postImageDAO.selectImageByPostId(
                 PostImageQueryByPostIdDTO(
                     query.origin,
-                    query.postID,
-                    query.queryCondition
+                    query.postID
                 )
-            )?.let {
+            )?.let { postImage ->
                 logger.debug {
                     "random img, origin: ${query.origin} postId: ${query.postID}, database hit, " +
-                            "imgId: ${it.imageId}"
+                            "imgId: ${postImage.imageId}"
                 }
-                it.url
+                imageDAO.selectImage(ImageQueryDTO(postImage.imageId))?.let {
+                    val url = chooseSimilarSize(it, query.queryConditionMap, query.queryCondition)
+                    redisTemplate.opsForValue().set(key, url, defaultExpire)
+                    url
+                } ?: run {
+                    logger.warn {
+                        "random img, origin: ${query.origin} postId: ${query.postID}, database hit, " +
+                                "but image not found, imgId: ${postImage.imageId}"
+                    }
+                    postImageDAO.deleteByImageId(postImage.imageId)
+                    throw ImageFetchException("no such image")
+                }
             } ?: run {
                 val imageDTO = imageDAO.randomSelImage(randomQueryDTO) ?: throw ImageFetchException("no such image")
                 logger.debug {
@@ -164,7 +173,6 @@ class ImageService(
                             query.origin,
                             query.postID,
                             imageDTO.id!!,
-                            query.queryCondition,
                             url
                         )
                     )

@@ -27,11 +27,10 @@ create table if not exists post_images
     origin          varchar(64)          not null comment 'postId所属来源',
     post_id         varchar(60)          not null,
     image_id        bigint               not null,
-    query_condition varchar(64)          not null,
     url             varchar(160)         not null,
     create_time     datetime             not null,
     update_time     datetime             not null,
     is_deleted      tinyint(1) default 0 not null,
-    constraint uk_source_post_id_img_id_query_cond_url
-        unique (origin, post_id, image_id, query_condition, url)
+    constraint uk_source_post_id_img_id_url
+        unique (origin, post_id, image_id, url)
 );

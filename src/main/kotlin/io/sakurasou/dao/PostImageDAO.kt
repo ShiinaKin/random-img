@@ -9,7 +9,6 @@ import io.sakurasou.entity.PostImages.deleted
 import io.sakurasou.entity.PostImages.imageId
 import io.sakurasou.entity.PostImages.origin
 import io.sakurasou.entity.PostImages.postId
-import io.sakurasou.entity.PostImages.queryCondition
 import io.sakurasou.entity.PostImages.url
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -36,7 +35,6 @@ class PostImageDAO(
                 set(it.origin, postImageDTO.origin)
                 set(it.postId, postImageDTO.postId)
                 set(it.imageId, postImageDTO.imageId)
-                set(it.queryCondition, postImageDTO.queryCondition)
                 set(it.url, postImageDTO.url)
                 set(it.createTime, now)
                 set(it.updateTime, now)
@@ -90,11 +88,10 @@ class PostImageDAO(
 
     suspend fun selectImageByPostId(postImageQueryByPostIdDTO: PostImageQueryByPostIdDTO): PostImageDTO? {
         return withContext(Dispatchers.IO) {
-            database.from(PostImages).select(origin, postId, imageId, queryCondition, url)
+            database.from(PostImages).select(origin, postId, imageId, url)
                 .where {
                     (origin eq postImageQueryByPostIdDTO.origin) and
                     (postId eq postImageQueryByPostIdDTO.postId) and
-                    (queryCondition eq postImageQueryByPostIdDTO.queryCondition) and
                     (deleted eq false)
                 }
                 .asIterable().firstOrNull()
@@ -103,7 +100,6 @@ class PostImageDAO(
                         it[origin]!!,
                         it[postId]!!,
                         it[imageId]!!,
-                        it[queryCondition]!!,
                         it[url]!!
                     )
                 }
