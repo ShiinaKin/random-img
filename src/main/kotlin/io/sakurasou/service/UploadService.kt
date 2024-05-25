@@ -30,7 +30,6 @@ import javax.imageio.ImageIO
 class UploadService(
     private val s3Service: S3Service,
     private val imageService: ImageService,
-    private val cloudreveService: CloudreveService,
     config: RandomImgConfig
 ) {
 
@@ -70,7 +69,6 @@ class UploadService(
                 }
                 val totalImageCnt = pairs.sumOf { it }
                 logger.info { "total success upload img: $totalImageCnt" }
-                cloudreveService.sync2Cloudreve()
             }
         }
     }
@@ -84,7 +82,6 @@ class UploadService(
                 val imageDTOs = s3Service.uploadFile2S3(imageEntityAndFileMapping)
                 imageService.batchInsertImage(imageDTOs)
                 logger.info { "upload success, imgCnt: ${uploadFiles.size}" }
-                cloudreveService.sync2Cloudreve()
             }
         }
     }

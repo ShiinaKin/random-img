@@ -27,14 +27,5 @@ random-img:
     bucket-name: ${S3_BUCKET_NAME}
     manual-upload-bucket-name: ${S3_MANUAL_UPLOAD_BUCKET_NAME}
     cdn-url: ${S3_CDN_URL}
-  cloudreve:
-    url: ${CLOUDREVE_URL}
-    username: ${CLOUDREVE_USERNAME}
-    password: ${CLOUDREVE_PASSWORD}
-    image-account-uid: ${CLOUDREVE_IMAGE_ACCOUNT_UID}
-    image-policy-id: ${CLOUDREVE_IMAGE_POLICY_ID}
-    s3-src: ${CLOUDREVE_S3_SRC}
-    cloudreve-dist: ${CLOUDREVE_DIST}
-    recursive: ${CLOUDREVE_RECURSIVE}
   persistence-referer: ${PERSISTENCE_REFERER}
   probability: ${PROBABILITY}

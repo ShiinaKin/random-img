@@ -21,7 +21,6 @@ import java.util.*
 @Service
 class S3Service(
     private val s3Client: AmazonS3,
-    private val cloudreveService: CloudreveService,
     config: RandomImgConfig,
 ) {
 
@@ -72,7 +71,6 @@ class S3Service(
             }
         }
         logger.info { "total delete img: $successCnt" }
-        cloudreveService.sync2Cloudreve()
     }
 
     fun clearImageBucket() {

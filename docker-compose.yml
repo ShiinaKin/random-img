@@ -26,14 +26,6 @@ services:
       S3_BUCKET_NAME: xxx
       S3_MANUAL_UPLOAD_BUCKET_NAME: xxx
       S3_CDN_URL: http://localhost
-      CLOUDREVE_URL: http://localhost
-      CLOUDREVE_USERNAME: xxx
-      CLOUDREVE_PASSWORD: xxx
-      CLOUDREVE_IMAGE_ACCOUNT_UID: 0
-      CLOUDREVE_IMAGE_POLICY_ID: 0
-      CLOUDREVE_S3_SRC: /
-      CLOUDREVE_DIST: /
-      CLOUDREVE_RECURSIVE: "true"
       PERSISTENCE_REFERER: localhost
       PROBABILITY: 0.01
     volumes:
