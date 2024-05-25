@@ -8,7 +8,7 @@ create table if not exists images
     original_width  int                  not null,
     original_path   varchar(128)         not null,
     width_1920_path varchar(128)         not null,
-    width_1600_path varchar(128)         not null,
+    width_1440_path varchar(128)         not null,
     width_1280_path varchar(128)         not null,
     width_960_path  varchar(128)         not null,
     width_640_path  varchar(128)         not null,

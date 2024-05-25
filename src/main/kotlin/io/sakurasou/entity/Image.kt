@@ -13,7 +13,7 @@ class Image : BaseEntity() {
     var originalWidth: Int? = null
     var originalPath: String? = null
     var w1920Path: String? = null
-    var w1600Path: String? = null
+    var w1440Path: String? = null
     var w1280Path: String? = null
     var w960Path: String? = null
     var w640Path: String? = null
@@ -28,7 +28,7 @@ object Images : Table<Nothing>("images") {
     val originalWidth = int("original_width")
     val originalPath = varchar("original_path")
     val w1920Path = varchar("width_1920_path")
-    val w1600Path = varchar("width_1600_path")
+    val w1440Path = varchar("width_1440_path")
     val w1280Path = varchar("width_1280_path")
     val w960Path = varchar("width_960_path")
     val w640Path = varchar("width_640_path")
@@ -78,7 +78,7 @@ data class ImageDTO(
     var originalWidth: Int,
     val originalPath: String,
     val w1920Path: String,
-    val w1600Path: String,
+    val w1440Path: String,
     val w1280Path: String,
     val w960Path: String,
     val w640Path: String,
@@ -86,11 +86,11 @@ data class ImageDTO(
     val id: Long? = null
 )
 
-enum class ImageSize(val size: Int) {
-    W_1920(1920),
-    W_1600(1600),
-    W_1280(1280),
-    W_960(960),
-    W_640(640),
-    W_320(320)
+enum class ImageSize(val width: Int, val type: String) {
+    W_1920(1920, "webp"),
+    W_1440(1440, "webp"),
+    W_1280(1280, "webp"),
+    W_960(960, "webp"),
+    W_640(640, "webp"),
+    W_320(320, "webp")
 }

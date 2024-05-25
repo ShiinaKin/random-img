@@ -60,7 +60,7 @@ class S3Service(
                 withContext(Dispatchers.IO) {
                     s3Client.deleteObject(bucketName, image.originalPath)
                     s3Client.deleteObject(bucketName, image.w1920Path)
-                    s3Client.deleteObject(bucketName, image.w1600Path)
+                    s3Client.deleteObject(bucketName, image.w1440Path)
                     s3Client.deleteObject(bucketName, image.w1280Path)
                     s3Client.deleteObject(bucketName, image.w960Path)
                     s3Client.deleteObject(bucketName, image.w640Path)

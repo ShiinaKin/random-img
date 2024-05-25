@@ -96,8 +96,8 @@ class UploadService(
             fileNamePrefix: String,
             imageSize: ImageSize
         ): UploadFile {
-            val nImage = ImageUtils.resize(image, imageSize.size)
-            val path = "${fileNamePrefix}_width_${imageSize.size}.webp"
+            val nImage = ImageUtils.resize(image, imageSize)
+            val path = "${fileNamePrefix}_width_${imageSize.width}.${imageSize.type}"
             return UploadFile(
                 rawFile.uid, rawFile.pid, path,
                 nImage, nImage.size.toLong(), Instant.now()
@@ -114,7 +114,7 @@ class UploadService(
                 val w640 = handleResizeImage(image, rawFile, fileNamePrefix, ImageSize.W_640)
                 val w960 = handleResizeImage(image, rawFile, fileNamePrefix, ImageSize.W_960)
                 val w1280 = handleResizeImage(image, rawFile, fileNamePrefix, ImageSize.W_1280)
-                val w1600 = handleResizeImage(image, rawFile, fileNamePrefix, ImageSize.W_1600)
+                val w1440 = handleResizeImage(image, rawFile, fileNamePrefix, ImageSize.W_1440)
                 val w1920 = handleResizeImage(image, rawFile, fileNamePrefix, ImageSize.W_1920)
                 val imageDTO = ImageDTO(
                     rawFile.uid,
@@ -123,14 +123,14 @@ class UploadService(
                     originalWidth = width,
                     originalPath = rawFile.path,
                     w1920Path = w1920.path,
-                    w1600Path = w1600.path,
+                    w1440Path = w1440.path,
                     w1280Path = w1280.path,
                     w960Path = w960.path,
                     w640Path = w640.path,
                     w320Path = w320.path,
                     null
                 )
-                map[imageDTO] = listOf(rawFile, w1920, w1600, w1280, w960, w640, w320)
+                map[imageDTO] = listOf(rawFile, w1920, w1440, w1280, w960, w640, w320)
             }
         }
         return map

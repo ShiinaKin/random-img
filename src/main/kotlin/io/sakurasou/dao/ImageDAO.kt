@@ -11,7 +11,7 @@ import io.sakurasou.entity.Images.originalWidth
 import io.sakurasou.entity.Images.pid
 import io.sakurasou.entity.Images.uid
 import io.sakurasou.entity.Images.w1280Path
-import io.sakurasou.entity.Images.w1600Path
+import io.sakurasou.entity.Images.w1440Path
 import io.sakurasou.entity.Images.w1920Path
 import io.sakurasou.entity.Images.w320Path
 import io.sakurasou.entity.Images.w640Path
@@ -50,7 +50,7 @@ class ImageDAO(
                         set(it.originalWidth, image.originalWidth)
                         set(it.originalPath, image.originalPath)
                         set(it.w1920Path, image.w1920Path)
-                        set(it.w1600Path, image.w1600Path)
+                        set(it.w1440Path, image.w1440Path)
                         set(it.w1280Path, image.w1280Path)
                         set(it.w960Path, image.w960Path)
                         set(it.w640Path, image.w640Path)
@@ -98,7 +98,7 @@ class ImageDAO(
                 originalWidth,
                 originalPath,
                 w1920Path,
-                w1600Path,
+                w1440Path,
                 w1280Path,
                 w960Path,
                 w640Path,
@@ -122,7 +122,7 @@ class ImageDAO(
                         it[originalWidth]!!,
                         it[originalPath]!!,
                         it[w1920Path]!!,
-                        it[w1600Path]!!,
+                        it[w1440Path]!!,
                         it[w1280Path]!!,
                         it[w960Path]!!,
                         it[w640Path]!!,
@@ -143,7 +143,7 @@ class ImageDAO(
                     originalWidth,
                     originalPath,
                     w1920Path,
-                    w1600Path,
+                    w1440Path,
                     w1280Path,
                     w960Path,
                     w640Path,
@@ -160,7 +160,7 @@ class ImageDAO(
                         it[originalWidth]!!,
                         it[originalPath]!!,
                         it[w1920Path]!!,
-                        it[w1600Path]!!,
+                        it[w1440Path]!!,
                         it[w1280Path]!!,
                         it[w960Path]!!,
                         it[w640Path]!!,
@@ -196,7 +196,7 @@ class ImageDAO(
                 val condSql = """
                     select
                         uid, pid, authority, original_width, original_path, 
-                        width_1920_path, width_1600_path, width_1280_path, width_960_path, width_640_path, width_320_path, 
+                        width_1920_path, width_1440_path, width_1280_path, width_960_path, width_640_path, width_320_path, 
                         id
                     from images
                     where uid = ? and is_deleted = 0
@@ -206,7 +206,7 @@ class ImageDAO(
                 val noCondSql = """
                     select
                         uid, pid, authority, original_width, original_path, 
-                        width_1920_path, width_1600_path, width_1280_path, width_960_path, width_640_path, width_320_path, 
+                        width_1920_path, width_1440_path, width_1280_path, width_960_path, width_640_path, width_320_path, 
                         id
                     from images
                     where is_deleted = 0
