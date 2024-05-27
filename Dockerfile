@@ -15,7 +15,7 @@ RUN ./gradlew bootJar --no-daemon
 
 
 FROM eclipse-temurin:21-alpine
-LABEL maintainer="mashirot <shiina@sakurasou.io>"
+LABEL maintainer="ShiinaKin <shiina@sakurasou.io>"
 WORKDIR /application
 
 COPY --from=build /application/build/libs/*.jar application.jar
