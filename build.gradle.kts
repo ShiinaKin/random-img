@@ -1,51 +1,73 @@
-val ktorVersion: String by project
-val kotlinVersion: String by project
-val logbackVersion: String by project
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 val ktormVersion: String by project
+val version: String by project
 
 plugins {
-    kotlin("jvm") version "1.9.24"
-    id("io.ktor.plugin") version "2.3.10"
-    id("org.jetbrains.kotlin.plugin.serialization") version "1.9.24"
+    id("org.springframework.boot") version "3.3.0"
+    id("io.spring.dependency-management") version "1.1.5"
+    kotlin("jvm") version "2.0.0"
+    kotlin("plugin.spring") version "2.0.0"
 }
 
 group = "io.sakurasou"
-version = "0.1.0"
+version
 
-application {
-    mainClass.set("io.sakurasou.ApplicationKt")
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+}
 
-    val isDevelopment: Boolean = project.ext.has("development")
-    applicationDefaultJvmArgs = listOf("-Dio.ktor.development=$isDevelopment")
+configurations {
+    compileOnly {
+        extendsFrom(configurations.annotationProcessor.get())
+    }
 }
 
 repositories {
     mavenLocal()
-    maven("https://maven.aliyun.com/repository/central")
     mavenCentral()
-
 }
 
 dependencies {
-    implementation("org.ktorm:ktorm-core:${ktormVersion}")
+    implementation("commons-codec:commons-codec:1.17.0")
+    implementation("net.coobird:thumbnailator:0.4.20")
+    implementation("org.sejda.imageio:webp-imageio:0.1.6")
 
-    implementation("io.ktor:ktor-server-core-jvm")
-    implementation("io.ktor:ktor-server-auth-jvm")
-    implementation("io.ktor:ktor-server-cors-jvm")
-    implementation("io.ktor:ktor-server-default-headers-jvm")
-    implementation("io.ktor:ktor-server-http-redirect-jvm")
-    implementation("com.ucasoft.ktor:ktor-simple-cache:0.+")
-    implementation("com.ucasoft.ktor:ktor-simple-redis-cache-jvm:0.+")
-    implementation("io.ktor:ktor-server-swagger-jvm")
-    implementation("io.ktor:ktor-server-content-negotiation-jvm")
-    implementation("io.ktor:ktor-serialization-jackson-jvm")
-    implementation("io.ktor:ktor-server-conditional-headers-jvm")
-    implementation("io.ktor:ktor-server-forwarded-header-jvm")
-    implementation("io.ktor:ktor-server-resources")
-    implementation("io.ktor:ktor-server-netty-jvm")
-    implementation("ch.qos.logback:logback-classic:$logbackVersion")
-    implementation("io.ktor:ktor-server-call-logging-jvm")
-    implementation("io.ktor:ktor-server-call-id-jvm")
-    testImplementation("io.ktor:ktor-server-tests-jvm")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlinVersion")
+    implementation("io.github.oshai:kotlin-logging-jvm:6.0.9")
+
+    implementation("com.amazonaws:aws-java-sdk-s3:1.12.720") {
+        exclude("commons-logging", module = "commons-logging")
+    }
+    implementation("javax.xml.bind:jaxb-api:2.3.1")
+
+    implementation("com.squareup.okhttp3:okhttp")
+
+    implementation("org.springframework.boot:spring-boot-starter-jdbc")
+    implementation("org.ktorm:ktorm-core:$ktormVersion")
+    runtimeOnly("com.mysql:mysql-connector-j")
+
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
+
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+tasks.withType<KotlinCompile> {
+    compilerOptions {
+        freeCompilerArgs.add("-Xjsr305=strict")
+        jvmTarget.set(JvmTarget.JVM_21)
+    }
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
 }

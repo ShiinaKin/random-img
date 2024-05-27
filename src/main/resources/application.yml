@@ -1,0 +1,31 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: random-img
+  servlet:
+    multipart:
+      max-file-size: 300MB
+      max-request-size: 1024MB
+  datasource:
+    url: ${SPRING_R2DBC_URL}
+    username: ${SPRING_R2DBC_USERNAME}
+    password: ${SPRING_R2DBC_PASSWORD}
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST}
+      port: ${SPRING_DATA_REDIS_PORT}
+random-img:
+  basic-auth:
+    username: ${BASIC_AUTH_USERNAME}
+    password: ${BASIC_AUTH_PASSWORD}
+  s3:
+    access-id: ${S3_ACCESS_ID}
+    access-token: ${S3_ACCESS_TOKEN}
+    endpoint: ${S3_ENDPOINT}
+    region: ${S3_REGION}
+    bucket-name: ${S3_BUCKET_NAME}
+    manual-upload-bucket-name: ${S3_MANUAL_UPLOAD_BUCKET_NAME}
+    cdn-url: ${S3_CDN_URL}
+  persistence-referer: ${PERSISTENCE_REFERER}
+  probability: ${PROBABILITY}
