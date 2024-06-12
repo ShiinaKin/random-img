@@ -2,7 +2,7 @@ version: '3.9'
 services:
   random-img:
     container_name: random-img
-    image: mashirot/random-img:latest
+    image: ghcr.io/shiinakin/random-img:main
     build:
       context: .
       dockerfile: Dockerfile
