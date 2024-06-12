@@ -109,6 +109,7 @@ open class ImageService(
             redisTemplate.keys("random_img:select:*").forEach {
                 redisTemplate.delete(it)
             }
+            logger.debug { "select image cache clear" }
         }
     }
 
@@ -117,6 +118,7 @@ open class ImageService(
             redisTemplate.keys("random_img:random:*").forEach {
                 redisTemplate.delete(it)
             }
+            logger.debug { "random image cache clear" }
         }
     }
 
@@ -135,9 +137,9 @@ open class ImageService(
     suspend fun randomSelectImage(query: ImageRandomQuery): String {
         val defaultExpire = Duration.ofHours(3)
         val randomQueryDTO = ImageRandomQueryDTO(query.uid)
-        if (query.postID.isNullOrBlank()) {
+        if (query.origin.isNullOrBlank() || query.postID.isNullOrBlank()) {
             val imageDTO = imageDAO.randomSelImage(randomQueryDTO) ?: throw ImageFetchException("no such image")
-            logger.info { "random img, origin: ${query.origin} fetch random image successfully, imgId: ${imageDTO.id}" }
+            logger.info { "random img, fetch random image successfully, imgId: ${imageDTO.id}" }
             return chooseSimilarSize(imageDTO, query.queryConditionMap, query.queryCondition)
         }
         val key = "random_img:random:${query.origin}:${query.postID}:${query.queryCondition}"
