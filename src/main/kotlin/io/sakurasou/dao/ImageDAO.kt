@@ -30,7 +30,7 @@ import java.time.LocalDateTime
  * 2024/5/21 20:20
  */
 @Repository
-class ImageDAO(
+open class ImageDAO(
     private val database: Database,
     private val idGenerator: SnowFlakeIdGenerator,
     private val postImageDAO: PostImageDAO,
@@ -65,7 +65,7 @@ class ImageDAO(
     }
 
     @Transactional
-    suspend fun deleteImageByIds(images: List<ImageDTO>) {
+    open suspend fun deleteImageByIds(images: List<ImageDTO>) {
         withContext(Dispatchers.IO) {
             val ids = images.map { it.id!! }
             database.batchUpdate(Images) {
@@ -81,8 +81,16 @@ class ImageDAO(
         }
     }
 
+    suspend fun physicalDeleteDeleted() {
+        withContext(Dispatchers.IO) {
+            database.delete(Images) {
+                it.deleted eq true
+            }
+        }
+    }
+
     @Transactional
-    suspend fun deleteAllImagePhysically() {
+    open suspend fun deleteAllImagePhysically() {
         withContext(Dispatchers.IO) {
             database.deleteAll(Images)
             database.deleteAll(PostImages)

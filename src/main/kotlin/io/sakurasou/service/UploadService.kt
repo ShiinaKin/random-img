@@ -37,10 +37,8 @@ class UploadService(
 
     val threadId = AtomicInteger(0)
     private val uploadThreadPool = ThreadPoolExecutor(
-        3, 3, 0, TimeUnit.MILLISECONDS, LinkedBlockingQueue(),
-        { Thread(it, "image-upload-thread-${threadId.getAndIncrement()}") },
-        ThreadPoolExecutor.AbortPolicy()
-    )
+        3, 3, 0, TimeUnit.MILLISECONDS, LinkedBlockingQueue()
+    ) { Thread(it, "image-upload-thread-${threadId.getAndIncrement()}") }
     private val s3ObjSummaryNeed2UploadSet = mutableSetOf<String>()
 
     private val cdnUrl = config.s3.cdnUrl

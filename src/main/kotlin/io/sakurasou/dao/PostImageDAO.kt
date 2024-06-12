@@ -1,5 +1,6 @@
 package io.sakurasou.dao
 
+import io.lettuce.core.ClientListArgs.Builder.ids
 import io.sakurasou.config.SnowFlakeIdGenerator
 import io.sakurasou.entity.PostImageDTO
 import io.sakurasou.entity.PostImageDeleteByOriginDTO
@@ -82,6 +83,28 @@ class PostImageDAO(
                         }
                     }
                 }
+            }
+        }
+    }
+
+    suspend fun deleteByOriginAndPostId(origin: String, postId: String) {
+        withContext(Dispatchers.IO) {
+            database.update(PostImages) {
+                set(it.deleted, true)
+                set(it.updateTime, LocalDateTime.now())
+                where {
+                    (it.origin eq origin) and
+                    (it.postId eq postId) and
+                    (it.deleted eq false)
+                }
+            }
+        }
+    }
+
+    suspend fun physicalDeleteDeleted() {
+        withContext(Dispatchers.IO) {
+            database.delete(PostImages) {
+                it.deleted eq true
             }
         }
     }

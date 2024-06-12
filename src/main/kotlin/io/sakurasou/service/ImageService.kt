@@ -12,6 +12,7 @@ import kotlinx.coroutines.withContext
 import org.apache.commons.codec.digest.DigestUtils
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.time.Duration
 import java.util.*
 import java.util.concurrent.LinkedBlockingQueue
@@ -25,7 +26,7 @@ import kotlin.math.absoluteValue
  * 2024/5/21 20:02
  */
 @Service
-class ImageService(
+open class ImageService(
     private val imageDAO: ImageDAO,
     private val postImageDAO: PostImageDAO,
     private val s3Service: S3Service,
@@ -37,9 +38,7 @@ class ImageService(
     private val imageDeleteThreadPool =
         ThreadPoolExecutor(
             1, 1, 0, TimeUnit.MILLISECONDS, LinkedBlockingQueue(),
-            { Thread(it, "image-delete-thread") },
-            ThreadPoolExecutor.AbortPolicy()
-        )
+        ) { Thread(it, "image-delete-thread") }
     private val isDeleting = AtomicBoolean(false)
 
     suspend fun batchInsertImage(list: List<ImageDTO>) {
@@ -89,6 +88,19 @@ class ImageService(
                 s3Service.clearImageBucket()
                 isDeleting.set(false)
             }
+        }
+    }
+
+    @Transactional
+    open suspend fun deleteDeletedRow() {
+        imageDAO.physicalDeleteDeleted()
+        postImageDAO.physicalDeleteDeleted()
+    }
+
+    suspend fun deleteImagePostMapping(origin: String, postId: String) {
+        postImageDAO.deleteByOriginAndPostId(origin, postId)
+        redisTemplate.keys("random_image:random:$origin:$postId:*").forEach {
+            redisTemplate.delete(it)
         }
     }
 
