@@ -4,7 +4,6 @@ import io.sakurasou.annotation.BasicAuth
 import io.sakurasou.entity.ImageDeleteDTO
 import io.sakurasou.entity.ImageQuery
 import io.sakurasou.entity.ImageRandomQuery
-import io.sakurasou.exception.WrongParameterException
 import io.sakurasou.service.ImageService
 import io.sakurasou.service.UploadService
 import jakarta.servlet.http.HttpServletRequest
@@ -49,6 +48,12 @@ class ImageController(
     }
 
     @BasicAuth
+    @DeleteMapping("/clean-deleted")
+    suspend fun deleteDeletedRow() {
+        imageService.deleteDeletedRow()
+    }
+
+    @BasicAuth
     @DeleteMapping("/cache/select")
     suspend fun clearSelectImageCache() {
         imageService.clearSelectImageCache()
@@ -60,9 +65,15 @@ class ImageController(
         imageService.clearRandomImageCache()
     }
 
+    @BasicAuth
+    @DeleteMapping("/post_image")
+    suspend fun deletePostId(origin: String, postId: String) {
+        val origin = origin.replace(":", "")
+        imageService.deleteImagePostMapping(origin, postId)
+    }
+
     @GetMapping("/")
     suspend fun selectImage(
-        httpRequest: HttpServletRequest,
         httpResponse: HttpServletResponse,
         id: Long, th: Int?, quality: Int?
     ) {
@@ -79,8 +90,7 @@ class ImageController(
         httpResponse: HttpServletResponse,
         postId: String?, uid: Long?, th: Int?, quality: Int?
     ) {
-        val referer = httpRequest.getHeader("Referer")?.replace(":", "")
-            ?: throw WrongParameterException("must take referer")
+        val referer = httpRequest.getHeader("Referer")
         val randomQuery = ImageRandomQuery(referer, postId, uid, th, quality ?: 1)
         val url = imageService.randomSelectImage(randomQuery)
         withContext(Dispatchers.IO) {
@@ -89,6 +99,6 @@ class ImageController(
     }
 
     @GetMapping("/health")
-    fun health() {}
+    fun health() { }
 
 }
