@@ -57,7 +57,7 @@ data class ImageQueryDTO(
 )
 
 data class ImageRandomQuery(
-    val origin: String,
+    val origin: String?,
     val postID: String?,
     val uid: Long?,
     val th: Int?,

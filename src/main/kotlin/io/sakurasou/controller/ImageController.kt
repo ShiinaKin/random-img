@@ -90,7 +90,7 @@ class ImageController(
         httpResponse: HttpServletResponse,
         postId: String?, uid: Long?, th: Int?, quality: Int?
     ) {
-        val referer = httpRequest.getHeader("Referer")
+        val referer = httpRequest.getHeader("Referer")?.replace(":", "")
         val randomQuery = ImageRandomQuery(referer, postId, uid, th, quality ?: 1)
         val url = imageService.randomSelectImage(randomQuery)
         withContext(Dispatchers.IO) {
