@@ -22,4 +22,5 @@
     </root>
     <logger name="io.netty" level="INFO"/>
     <logger name="io.lettuce" level="INFO"/>
+    <logger name="io.sakurasou" level="DEBUG"/>
 </configuration>
