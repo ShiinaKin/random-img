@@ -1,4 +1,3 @@
-version: '3.9'
 services:
   random-img:
     container_name: random-img
