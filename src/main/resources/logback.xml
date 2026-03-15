@@ -17,10 +17,10 @@
     </appender>
 
     <root level="INFO">
-        <appender-ref ref="STDOUT"/>
+        <!-- <appender-ref ref="STDOUT"/> -->
         <appender-ref ref="FILE"/>
     </root>
     <logger name="io.netty" level="INFO"/>
     <logger name="io.lettuce" level="INFO"/>
-    <logger name="io.sakurasou" level="DEBUG"/>
+    <logger name="io.sakurasou" level="INFO"/>
 </configuration>

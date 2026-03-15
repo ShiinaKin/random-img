@@ -182,6 +182,7 @@ open class ImageService(
                 }
                 val url = chooseSimilarSize(imageDTO, query.queryConditionMap, query.queryCondition)
                 if (config.persistenceReferer.contains(query.origin)) {
+                    logger.debug { "random img, origin: ${query.origin} postId: ${query.postID}, need to persistence" }
                     postImageDAO.insert(
                         PostImageDTO(
                             query.origin,
@@ -193,6 +194,7 @@ open class ImageService(
                     logger.debug { "random img, origin: ${query.origin} postId: ${query.postID}, persistence success" }
                 }
                 redisTemplate.opsForValue().set(key, url, defaultExpire)
+                logger.debug { "random img, origin: ${query.origin} postId: ${query.postID}, cached success" }
                 url
             }
         }
