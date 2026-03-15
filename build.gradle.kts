@@ -43,6 +43,7 @@ dependencies {
     }
     implementation("javax.xml.bind:jaxb-api:2.3.1")
 
+    implementation(platform("com.squareup.okhttp3:okhttp-bom:5.3.2"))
     implementation("com.squareup.okhttp3:okhttp")
 
     implementation("org.springframework.boot:spring-boot-starter-jdbc")
@@ -72,4 +73,5 @@ tasks.withType<KotlinCompile> {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    failOnNoDiscoveredTests = false
 }
