@@ -34,6 +34,8 @@ dependencies {
     implementation("net.coobird:thumbnailator:0.4.20")
     implementation("org.sejda.imageio:webp-imageio:0.1.6")
 
+    implementation("org.slf4j:slf4j-api:2.0.17")
+    implementation("ch.qos.logback:logback-classic:1.5.32")
     implementation("io.github.oshai:kotlin-logging-jvm:6.0.9")
 
     implementation("com.amazonaws:aws-java-sdk-s3:1.12.720") {
