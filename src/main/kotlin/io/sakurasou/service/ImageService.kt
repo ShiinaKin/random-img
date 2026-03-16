@@ -135,7 +135,7 @@ open class ImageService(
     }
 
     suspend fun randomSelectImage(query: ImageRandomQuery): String {
-        val defaultExpire = Duration.ofHours(3)
+        val defaultExpire = Duration.ofHours(6)
         val randomQueryDTO = ImageRandomQueryDTO(query.uid)
         if (query.origin.isNullOrBlank() || query.postID.isNullOrBlank()) {
             val imageDTO = imageDAO.randomSelImage(randomQueryDTO) ?: throw ImageFetchException("no such image")
@@ -191,7 +191,7 @@ open class ImageService(
                             url
                         )
                     )
-                    logger.debug { "random img, origin: ${query.origin} postId: ${query.postID}, persistence success" }
+                    logger.info { "random img, origin: ${query.origin} postId: ${query.postID}, persistence success" }
                 }
                 redisTemplate.opsForValue().set(key, url, defaultExpire)
                 logger.debug { "random img, origin: ${query.origin} postId: ${query.postID}, cached success" }
